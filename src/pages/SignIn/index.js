@@ -7,6 +7,7 @@ import { Feather } from '@expo/vector-icons';
 import api from '../services/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import TabRoutes from '../../TabRoutes';
+import Loading from '../components/Loading';
 
 
 export default function Login() {
@@ -18,7 +19,7 @@ export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [camposObrigatorios, setCamposObrigatorios] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [fieldErrors, setFieldErrors] = useState({});
 
   const showAndHideError = (message) => {
@@ -145,7 +146,7 @@ export default function Login() {
           <Text style={styles.Esenhatext}>Esqueceu sua senha?</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.button} onPress={() => onSubmit(email, password)}>
-        <Text style={styles.buttontext}>{isLoading ? 'Verificando conta...' : 'Acessar'}</Text>
+         {isLoading ? <Loading /> : <Text style={styles.buttontext}>Acessar</Text>}
         </TouchableOpacity>
         <TouchableOpacity style={styles.buttonCadrasto} onPress={() => navigation.navigate('Cadastro')}>
           <Text style={styles.cadastro}>Primeiro Acesso? Cadastrar-se</Text>
@@ -303,11 +304,13 @@ const styles = StyleSheet.create({
   button: {
     backgroundColor: 'rgba(0, 141, 134, 1)',
     width: '80%', 
+    height:'6.5%',
+    position:'absolute',
     borderRadius: 10,
     paddingVertical: 8,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 40, 
+    marginTop: '90%', 
     alignSelf: 'center', 
   },
   buttontext: {

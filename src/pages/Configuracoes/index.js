@@ -5,9 +5,8 @@ import { Feather } from '@expo/vector-icons';
 import * as Animatable from 'react-native-animatable';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from '../services/api';
-import SearchContrato from '../../assets/SearchContrato.jpg';
 import Onibus from '../../assets/semfundo.png';
-import moment from 'moment-timezone';
+
 
 export default function Configurações() {
     const navigation = useNavigation();
@@ -15,21 +14,11 @@ export default function Configurações() {
     const [userCpf, setUserCpf] = useState('');
     const [userTell, setUserTell] = useState('');
     const [userEmail, setUserEmail] = useState('');
-    const [rotaInicio, setRotaInicio] = useState('');
-    const [rotaFim, setRotaFim] = useState('');
-    const [servicosEncontrados, setServicosEncontrados] = useState([]);
-    const [mensagem, setMensagem] = useState('Nenhum serviço encontrado');
-    const [contratos, setContratos] = useState([]);
-    const [isLoading, setIsLoading] = useState(false);
-    const [selectedServico, setSelectedServico] = useState(null);
-    const [isModalVisible, setIsModalVisible] = useState(false);
-    const [height, setHeight] = useState('');
-    const [etapa, setEtapa] = useState(1);
     const [modalColor, setModalColor] = useState('#FF0000'); 
     const [showModal, setShowModal] = useState(false);
     const [errorTotais, setErrorTotais] = useState('');
-    const [temContratosAtivos, setTemContratosAtivos] = useState(false);
-    const [valorTotalPreco, setValorTotal] = useState('');
+
+
     const showAndHideError = (message) => {
         setErrorTotais(message);
         setShowModal(true);
@@ -49,6 +38,10 @@ export default function Configurações() {
           setErrorTotais('');
         }, 1500);
       };
+
+      const Loading = () => {
+
+      }
     useEffect(() => {
         const fetchUserData = async () => {
             try {
@@ -98,36 +91,108 @@ export default function Configurações() {
                 <View style={styles.infoHeader}>
                         <Text style={styles.TextHeader}>Configurações</Text> 
                     </View>
+                    
                 <Animatable.View animation="fadeInDown" duration={800} style={styles.formContainer}>
-                 <Text>Nome</Text>
+                    <View style={styles.EstiloContainerPinNome}>
+                        <Feather name="edit" size={16} color={'#005C58'} style={styles.PinEdit} />
+                        <Text style={styles.NomeEdit}>Nome</Text>     
+                    </View>
+                    <View style={styles.ContainerMostrarNomePin}>
+                       <Feather name="user" size={22} color={'#005C58'} style={styles.PinIcon} />
+                       <Text style={styles.Campo}>Rafael Godoy Pinguelo</Text>  
+                    </View>
                 </Animatable.View>
                 <Animatable.View animation="fadeInDown" duration={800} style={styles.formContainer2}>
-                <Text>Telefone</Text>
+                    <View style={styles.EstiloContainerPinNome}>
+                        <Feather name="edit" size={16} color={'#005C58'} style={styles.PinEdit} />
+                        <Text style={styles.NomeEdit}>Telefone</Text>     
+                    </View>
+                    <View style={styles.ContainerMostrarNomePin}>
+                       <Feather name="phone" size={22} color={'#005C58'} style={styles.PinIcon} />
+                       <Text style={styles.Campo}>(44) 9 9896-9205</Text>  
+                    </View>
                 </Animatable.View>
                 <Animatable.View animation="fadeInDown" duration={800} style={styles.formContainer2}>
-                <Text>CPF</Text>
+                    <View style={styles.EstiloContainerPinNome}>
+                        <Feather name="lock" size={16} color={'#005C58'} style={styles.PinEdit} />
+                        <Text style={styles.NomeEdit}>CPF</Text>     
+                    </View>
+                    <View style={styles.ContainerMostrarNomePin}>
+                       <Feather name="lock" size={22} color={'#005C58'} style={styles.PinIcon} />
+                       <Text style={styles.Campo}>062.267.279-77</Text>  
+                    </View>
                 </Animatable.View>
                 <Animatable.View animation="fadeInDown" duration={800} style={styles.formContainer2}>
-                <Text>Email</Text>
+                    <View style={styles.EstiloContainerPinNome}>
+                        <Feather name="edit" size={16} color={'#005C58'} style={styles.PinEdit} />
+                        <Text style={styles.NomeEdit}>E-mail</Text>     
+                    </View>
+                    <View style={styles.ContainerMostrarNomePin}>
+                       <Feather name="mail" size={22} color={'#005C58'} style={styles.PinIcon} />
+                       <Text style={styles.Campo}>rafaelgpinguelo@gmail.com</Text>  
+                    </View>
                 </Animatable.View>
                 <Animatable.View animation="fadeInDown" duration={800} style={styles.formContainer2}>
-                <Text>Data de Nascimento</Text>
+                    <View style={styles.EstiloContainerPinNome}>
+                        <Feather name="edit" size={16} color={'#005C58'} style={styles.PinEdit} />
+                        <Text style={styles.NomeEdit}>Data de Nascimento</Text>     
+                    </View>
+                    <View style={styles.ContainerMostrarNomePin}>
+                       <Feather name="calendar" size={22} color={'#005C58'} style={styles.PinIcon} />
+                       <Text style={styles.Campo}>27/03/2004</Text>  
+                    </View>
                 </Animatable.View>
                 <Animatable.View animation="fadeInDown" duration={800} style={styles.formContainer2}>
-                <Text>Estado</Text>
+                    <View style={styles.EstiloContainerPinNome}>
+                        <Feather name="edit" size={16} color={'#005C58'} style={styles.PinEdit} />
+                        <Text style={styles.NomeEdit}>Estado</Text>     
+                    </View>
+                    <View style={styles.ContainerMostrarNomePin}>
+                       <Feather name="map" size={22} color={'#005C58'} style={styles.PinIcon} />
+                       <Text style={styles.Campo}>Paraná</Text>  
+                    </View>
                 </Animatable.View>
                 <Animatable.View animation="fadeInDown" duration={800} style={styles.formContainer2}>
-                <Text>Cidade</Text>
+                    <View style={styles.EstiloContainerPinNome}>
+                        <Feather name="edit" size={16} color={'#005C58'} style={styles.PinEdit} />
+                        <Text style={styles.NomeEdit}>Cidade</Text>     
+                    </View>
+                    <View style={styles.ContainerMostrarNomePin}>
+                       <Feather name="map-pin" size={22} color={'#005C58'} style={styles.PinIcon} />
+                       <Text style={styles.Campo}>Peabiru</Text>  
+                    </View>
                 </Animatable.View>
                 <Animatable.View animation="fadeInDown" duration={800} style={styles.formContainer2}>
-                <Text>Bairro</Text>
+                    <View style={styles.EstiloContainerPinNome}>
+                        <Feather name="edit" size={16} color={'#005C58'} style={styles.PinEdit} />
+                        <Text style={styles.NomeEdit}>Bairro</Text>     
+                    </View>
+                    <View style={styles.ContainerMostrarNomePin}>
+                       <Feather name="map-pin" size={22} color={'#005C58'} style={styles.PinIcon} />
+                       <Text style={styles.Campo}>Bela Vista</Text>  
+                    </View>
                 </Animatable.View>
                 <Animatable.View animation="fadeInDown" duration={800} style={styles.formContainer2}>
-                <Text>Logradouro</Text>
+                    <View style={styles.EstiloContainerPinNome}>
+                        <Feather name="edit" size={16} color={'#005C58'} style={styles.PinEdit} />
+                        <Text style={styles.NomeEdit}>Logradouro</Text>     
+                    </View>
+                    <View style={styles.ContainerMostrarNomePin}>
+                       <Feather name="map-pin" size={22} color={'#005C58'} style={styles.PinIcon} />
+                       <Text style={styles.Campo}>Otácilio Ferreira Lima</Text>  
+                    </View>
                 </Animatable.View>
                 <Animatable.View animation="fadeInDown" duration={800} style={styles.formContainer2}>
-                <Text>N° Casa</Text>
+                    <View style={styles.EstiloContainerPinNome}>
+                        <Feather name="edit" size={16} color={'#005C58'} style={styles.PinEdit} />
+                        <Text style={styles.NomeEdit}>N°  Casa</Text>     
+                    </View>
+                    <View style={styles.ContainerMostrarNomePin}>
+                       <Feather name="map-pin" size={22} color={'#005C58'} style={styles.PinIcon} />
+                       <Text style={styles.Campo}>228</Text>  
+                    </View>
                 </Animatable.View>
+               
             </View>
             
         </SafeAreaView>
@@ -139,6 +204,23 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: 'rgba(0, 141, 134, 0.050)',
         
+    },
+    ContainerMostrarNomePin:{
+      flexDirection:'row',
+    },
+    EstiloContainerPinNome:{
+      flexDirection:'row-reverse',
+    },
+    Campo:{
+        fontSize:16,
+        width:'100%',
+        marginLeft:5,
+        color:'#00413E',
+    },
+    NomeEdit:{
+     width:'95%',
+     fontSize:10,
+     color:'#6c6c6c'
     },
     modalContainer: {
         width: "100%",
@@ -181,8 +263,7 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     formContainer: {
-        justifyContent: 'center',
-        padding:10,
+        padding:5,
         width:'95%',
         height:'7%',
         backgroundColor:'#fff',
@@ -199,14 +280,13 @@ const styles = StyleSheet.create({
         elevation: 4,
     },
     formContainer2: {
-        justifyContent: 'center',
-        padding:10,
+        padding:5,
         width:'95%',
         height:'7%',
         backgroundColor:'#fff',
         borderRadius:5,
         alignSelf:'center',
-        marginTop:'5%',
+        marginTop:'4.7%',
         shadowColor: '#000',
         shadowOffset: {
             width: 0,
