@@ -11,7 +11,6 @@ import moment from 'moment-timezone';
 
 export default function Procurar() {
     const navigation = useNavigation();
-    const [userName, setUserName] = useState('');
     const [rotaInicio, setRotaInicio] = useState('');
     const [rotaFim, setRotaFim] = useState('');
     const [servicosEncontrados, setServicosEncontrados] = useState([]);
@@ -417,7 +416,7 @@ export default function Procurar() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: 'rgba(0, 141, 134, 0.10)',
+        backgroundColor: 'rgba(0, 141, 134, 0.050)',
         
     },
     infoHeaderModal: {
@@ -500,7 +499,7 @@ const styles = StyleSheet.create({
        
     },
     infoHeader:{
-        marginTop:80,
+        marginTop:60,
     },
     line1: {
         flex: 1,

@@ -271,8 +271,14 @@ export default function Cadastro() {
             }, 1500);
 
         } catch (error) {
-            showAndHideError('Erro no servidor!');
+            showAndHideError('E-mail já utilizado!');
             setIsLoading(false);
+            setTimeout(() => {
+                setShowModal(false);
+                setErrorTotais('');
+                navigation.navigate('Welcome');
+            }, 1000);
+            
 
         }
     };

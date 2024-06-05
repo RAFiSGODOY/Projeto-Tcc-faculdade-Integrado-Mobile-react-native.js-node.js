@@ -8,7 +8,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import DatePicker from 'react-native-date-picker'
 import Onibus from '../../assets/back-home.jpg';
 import api from '../services/api';
-import BackHome from '../../assets/home3.png';
+import BackHome from '../../assets/semfundo.png';
 
 export default function Home() {
     const navigation = useNavigation();
@@ -89,9 +89,9 @@ export default function Home() {
         } catch (error) {
             console.log('Error fetching user data:', error);
             if (error.response && error.response.status === 500) {
-                console.log('Erro interno no servidor. Por favor, tente novamente mais tarde.');
-                console.log('Ocorreu um erro ao buscar os dados do usuário. Por favor, tente novamente mais tarde.');
-                showAndHideError("Erro ao buscar os dados do usuário...");
+                console.log('Erro interno no servidor.');
+                console.log('Ocorreu um erro ao buscar os dados do usuário!');
+                showAndHideError("Erro ao buscar os dados do usuário!");
             } else {
                 console.log('Erro ao buscar os dados do usuário.');
                 showAndHideError("Erro ao buscar os dados do usuário.");
