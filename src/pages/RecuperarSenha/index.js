@@ -20,7 +20,7 @@ export default function RecuperarSenha() {
     const navigation = useNavigation();
     const [etapa, setEtapa] = useState(0);
     const [email, setEmail] = useState('');
-    const [codigo, setCodigo] = useState('');
+    const [code, setCode] = useState('');
     const [emailconfirmado, setEmailConfirmado] = useState('');
     const [newpassword, setNewPassword] = useState('');
     const [newpasswordconfirmado, setNewConfirmarpassword] = useState('');
@@ -31,17 +31,81 @@ export default function RecuperarSenha() {
     const [fieldErrors, setFieldErrors] = useState({});
     const [codigoEnviado, setCodigoEnviado] = useState('');
     const [isLoading, setIsLoading] = useState(false);
-  
+    const [enviarDisponivel, setEnviarDisponivel] = useState(true);
+    const [tempoRestante, setTempoRestante] = useState(30);
+    
+
+
+    const reenviarcodigo = async () => {
+        try {
+            const response = await api.post('/reset-code', { email });
+            console.log('Resposta do servidor:', response.data.code);
+            if (response.data) {
+                setCodigoEnviado(response.data);
+                showAndHideCorreto('Código Enviado com Sucesso!');
+                console.log("Código enviado salvo na variável:", response.data);
+                setEnviarDisponivel(false);
+                setTempoRestante(30);
+
+                setTimeout(() => {
+                    setEnviarDisponivel(true);
+                }, 30000);
+            } else {
+                console.log('Erro ao reenviar código:', error);
+                showAndHideError('Erro ao reenviar código!');
+            }
+        } catch (error) {
+            showAndHideError('Erro no servidor!');
+            verificarCamposObrigatorios();
+            setTimeout(() => {
+                setShowModal(false);
+                setErrorTotais('');
+                setEtapa(0);
+            }, 1500);
+        }
+    };
+
+    useEffect(() => {
+        let interval;
+
+        if (!enviarDisponivel) {
+            interval = setInterval(() => {
+                setTempoRestante((prevTime) => prevTime - 1);
+            }, 1000);
+        }
+
+        return () => {
+            clearInterval(interval);
+        };
+    }, [enviarDisponivel]);
+
+
+    
     const avançarEtapa = () => {
         setEtapa(1);
     }
     const validaremail = () => {
         if(email === emailconfirmado){
             return true;
-        }else {
+        }else{
             return false;
         }
     }
+    //confirma o codigo enviado ao email do usuario
+    const enviarCodigo = async () => {
+        try {
+            console.log("codigo indo pra verificação")
+            const response = await api.post('/client/reset-password', { code });
+            setCodigoEnviado(response.data);
+            console.log(response.data)
+            return true;
+        } catch (error) {
+            console.log('Erro ao enviar código:', error);
+            return false;
+        }
+    };
+
+
 
     const proximaEtapa = async () => {
         if(etapa === 1){
@@ -49,12 +113,13 @@ export default function RecuperarSenha() {
                 showAndHideError('Informe seu E-mail!');
                 verificarCamposObrigatorios();
                 
-            }else if (email){
-                    setEtapa(2);
+            } else {
+              setEtapa(2);
             
             }
 
         }else if (etapa === 2 && emailconfirmado) {
+        if(emailconfirmado){
             if (validaremail()) {
                 setIsLoading(true); // Inicia o estado de carregamento
                 await mandarCodigoRecuperacao();
@@ -67,8 +132,44 @@ export default function RecuperarSenha() {
                     setEtapa(1);
                 }, 1500);
             } 
-        } else if (etapa === 3 && codigo) {
-            if (codigoEnviado && codigo === codigoEnviado.toString()) { 
+        } else {
+            console.log(emailconfirmado)
+            verificarCamposObrigatorios();
+            showAndHideError('Preencha todos os campos obrigatórios!');
+        } 
+
+        } else if (etapa === 3 && newpassword ) {
+            if(!newpassword){
+                showAndHideError('Informe sua nova Senha!');
+                verificarCamposObrigatorios();
+            }else if (newpassword){
+                    setEtapa(4);
+               
+            }
+        } else if (etapa === 4 && newpasswordconfirmado ) {
+            if(!newpasswordconfirmado){
+                showAndHideError('Confirme sua senha!');
+                verificarCamposObrigatorios();
+            }else if (newpasswordconfirmado){
+                    if(newpasswordconfirmado == newpassword){
+                            showAndHideCorreto("Senha Confirmada!")
+                            setTimeout(() => {
+                                setShowModal(false);
+                                setErrorTotais('');
+                                setEtapa(5);
+                            }, 1500);
+                    }else{
+                       showAndHideError("As senhas não batem, digite novamente!");
+                       setTimeout(() => {
+                        setShowModal(false);
+                        setErrorTotais('');
+                        setEtapa(3);
+                    }, 1500);
+                    }
+               
+            }
+        } else if (etapa === 5 && code) {
+            if (await enviarCodigo()) { 
                 showAndHideCorreto('Código Validado!');
                 setTimeout(() => {
                     setShowModal(false);
@@ -77,14 +178,6 @@ export default function RecuperarSenha() {
                 }, 1500);
             } else {
                 showAndHideError('Código incorreto!');
-            }
-        } else if (etapa === 4 && newpassword ) {
-            if(!newpassword){
-                showAndHideError('Informe sua nova Senha!');
-                verificarCamposObrigatorios();
-            }else if (newpassword){
-                    setEtapa(5);
-               
             }
         } else {
             verificarCamposObrigatorios();
@@ -111,33 +204,39 @@ export default function RecuperarSenha() {
             setErrorTotais('');
         }, 1500);
     }, []);
+
+    //Manda o codigo para o email do usuario
     const  mandarCodigoRecuperacao = async () => {
         try {
             const response = await api.post('/reset-code', { email });
-            console.log('Resposta do servidor:', response.data);
-            if (response.data && response.data.code) {
-                setCodigoEnviado(response.data.code);
+            console.log('Resposta do servidor:', response.data.code);
+            if (response.data) {
+                setCodigoEnviado(response.data);
                 showAndHideCorreto('Código Enviado com Sucesso!');
-                console.log("Código enviado salvo na variável:", response.data.code);
+                console.log("Código enviado salvo na variável:", response.data);
                 setTimeout(() => {
                     setShowModal(false);
                     setErrorTotais('');
                     setEtapa(3);
                 }, 1500);
             } else {
+                console.log('Erro ao enviar código:', error);
                 showAndHideError('Erro ao enviar código!');
             }
         } catch (error) {
-            showAndHideError('E-mail não Cadastrado!');
+            showAndHideError('Erro no servidor!');
+            verificarCamposObrigatorios();
             setTimeout(() => {
                 setShowModal(false);
                 setErrorTotais('');
-                setEtapa(1);
+                setEtapa(0);
             }, 1500);
-            verificarCamposObrigatorios();
+            
 
         }
     };
+   
+   
     const clearFieldError = (field) => {
         setFieldErrors((prevErrors) => {
             const newErrors = { ...prevErrors };
@@ -167,17 +266,17 @@ export default function RecuperarSenha() {
                 errors.emailconfirmado = 'Confirme seu E-mail!';
             }
             
-        } else if (etapa === 3) {
-            if (!codigo) {
+        } else if (etapa === 5) {
+            if (!code) {
                 camposFaltando.push('codigo');
                 errors.codigo = 'Informe o Código enviado ao seu E-mail!';
             }
-        } else if (etapa === 4) {
+        } else if (etapa === 3) {
             if (!newpassword) {
                 camposFaltando.push('newpassword');
                 errors.newpassword = 'Informe uma nova senha!';
             }
-        } else if (etapa === 5) {
+        } else if (etapa === 4) {
             if (!newpasswordconfirmado) {
                 camposFaltando.push('newpasswordconfirmado');
                 errors.newpasswordconfirmado = 'Confirme a sua nova senha!';
@@ -188,14 +287,14 @@ export default function RecuperarSenha() {
         setFieldErrors(errors);
 
         return camposFaltando.length === 0;
-    }, [etapa, email, emailconfirmado, codigo, newpassword, newpasswordconfirmado]);
+    }, [etapa, email, emailconfirmado, code, newpassword, newpasswordconfirmado]);
 
     const salvar = async () => {
-        if (etapa === 5 && (newpassword && newpasswordconfirmado)) {
+        if (etapa === 5 && code) {
             setIsLoading(true);
             if (newpassword === newpasswordconfirmado) {
                 try {
-                    await api.post(`/client/reset-password/${codigoEnviado}`, {
+                    await api.post(`/client/reset-password/${code}`, {
                         novaSenha: newpassword,
                     });
                     console.log('Dados salvos com sucesso');
@@ -208,7 +307,7 @@ export default function RecuperarSenha() {
                         setEtapa(6);
                     }, 1500);
                 } catch (error) {
-                    showAndHideError('Erro ao alterar a senha!');
+                    showAndHideError('Código Incorreto!');
                     setIsLoading(false);
                 }
             } else {
@@ -217,7 +316,7 @@ export default function RecuperarSenha() {
                 setTimeout(() => {
                     setShowModal(false);
                     setErrorTotais('');
-                    setEtapa(4);
+                    setEtapa(3);
                 }, 1500);
             }
         } else {
@@ -329,11 +428,11 @@ export default function RecuperarSenha() {
                         </TouchableOpacity>
                     </Animatable.View>
                 )}
-                {etapa === 3 && (
+                {etapa === 5 && (
                     <Animatable.View delay={200} animation="fadeInUp">
                         <View style={styles.infoHeader}>
 
-                            <Text style={styles.infoHeaderText2}>Quase lá... Confirme o código enviado ao seu E-mail:</Text>
+                            <Text style={styles.infoHeaderText2}>Quase lá... Agora só confirme o código enviado ao seu E-mail:</Text>
                         </View>
                         <Image
                                 source={Forgotcodigo}
@@ -354,26 +453,30 @@ export default function RecuperarSenha() {
                                 options={{
                                     mask: '999999'
                                 }}
-                                value={codigo}
-                                onChangeText={(text) => {setCodigo(text);
+                                value={code}
+                                onChangeText={(text) => {setCode(text);
                                     clearFieldError('codigo');
                                 }
                                 }
                                 keyboardType="numeric"
                                 placeholder="Código"
-                                style={[styles.campoEndereco, camposObrigatorios.includes('codigo') && styles.campoObrigatorio ]}
+                                style={[styles.campoEndereco2, camposObrigatorios.includes('codigo') && styles.campoObrigatorio ]}
                             />
-                        </View>
+                           
+                        </View> 
+                        <TouchableOpacity style={styles.buttonReenviar} disabled={!enviarDisponivel} onPress={reenviarcodigo}>
+                            <Text style={styles.buttonTextReenviar}>{enviarDisponivel ? 'Reenviar Código' : `Reenviar em ${tempoRestante}s`}</Text>
+                            </TouchableOpacity>
                         {fieldErrors.codigo && <Text style={styles.errorText}>{fieldErrors.codigo}</Text>}
-                        <TouchableOpacity style={styles.button} onPress={proximaEtapa}>
+                        <TouchableOpacity style={styles.button} onPress={salvar}>
                             <Text style={styles.buttontext}>Próxima Etapa</Text>
                         </TouchableOpacity>
                     </Animatable.View>
                 )}
-                 {etapa === 4 && (
+                 {etapa === 3 && (
                     <Animatable.View delay={200} animation="fadeInUp">
                         <View style={styles.infoHeader}>
-                            <Text style={styles.infoHeaderText2}>Oba, código confirmado! Por favor, informe sua senha nova:</Text>
+                            <Text style={styles.infoHeaderText2}>Por favor, informe sua senha nova enquanto seu código chega a você:</Text>
                             <Text style={styles.textHeader2}>Lembre-se... crie uma senha que você vá se lembrar e tome cuidado, não compartilhe sua senha com nínguem!</Text>
                         </View>
                         <Image
@@ -405,7 +508,7 @@ export default function RecuperarSenha() {
                             </TouchableOpacity>
                     </Animatable.View>
                 )}
-                {etapa === 5 && (
+                {etapa === 4 && (
                     <Animatable.View delay={200} animation="fadeInUp">
                         <View style={styles.infoHeader}>
                             <Text style={styles.infoHeaderText2}>Tudo certo ! Agora  digite  novamente  sua  nova  senha:</Text>
@@ -437,7 +540,7 @@ export default function RecuperarSenha() {
                             />
                             {fieldErrors.newpasswordconfirmado && <Text style={styles.errorText}>{fieldErrors.newpasswordconfirmado}</Text>}
 
-                            <TouchableOpacity style={styles.button} onPress={salvar}>
+                            <TouchableOpacity style={styles.button} onPress={proximaEtapa}>
                             <Text style={styles.buttontext}>{isLoading ? 'Carregando...' : 'Próxima etapa'}</Text>
                             </TouchableOpacity>
                     </Animatable.View>
@@ -616,7 +719,7 @@ const styles = StyleSheet.create({
         color: '#005C58',
         fontWeight: '800',
         textAlign:'justify',
-        marginTop:'0%',
+        marginTop:'-7%',
         width:'100%',
         height:'auto',
         zIndex:2,
@@ -702,6 +805,14 @@ const styles = StyleSheet.create({
         alignSelf: 'center',
         zIndex: 2,
     },
+    buttonTextReenviar:{
+        color:'#005C58',
+        fontSize:12,
+        fontWeight:'600',
+        marginTop:5,
+        textAlign:'center',
+    },
+     
     buttonEtapa0: {
         backgroundColor: '#005C58',
         width: '100%',
@@ -780,8 +891,26 @@ const styles = StyleSheet.create({
     campoEndereco: {
         height: 50,
         marginBottom: 10,
-        marginTop: 10,
-        marginLeft:10,
+       marginLeft:10,
+         marginTop: 10,
+        fontSize: 20,
+        backgroundColor:'#EDEDED',
+        borderRadius:5,
+        opacity: 1,
+        color:'#00413E',
+        width:'100%',
+        justifyContent:'center',
+        alignSelf:'center',
+        zIndex:5,
+        textAlign:'center',
+        
+        
+    },
+    campoEndereco2: {
+        height: 50,
+        marginBottom: 0,
+       marginLeft:10,
+         marginTop: 10,
         fontSize: 20,
         backgroundColor:'#EDEDED',
         borderRadius:5,

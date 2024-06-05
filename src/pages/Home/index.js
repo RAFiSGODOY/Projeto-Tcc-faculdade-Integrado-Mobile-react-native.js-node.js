@@ -1,225 +1,340 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { View, Text, TextInput, Image, StyleSheet, KeyboardAvoidingView, Platform, TouchableOpacity, ScrollView, StatusBar } from 'react-native';
+import React, { useState, useEffect} from 'react';
+import { useRoute } from '@react-navigation/native';
+import { View, Text, TextInput, Image, StyleSheet, TouchableOpacity, ScrollView, StatusBar, Modal, SafeAreaView, KeyboardAvoidingView, Platform } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Feather } from '@expo/vector-icons';
+import * as Animatable from 'react-native-animatable';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import api from '../services/api';
-import SearchContrato from '../../assets/SearchContrato.jpg';
+import DatePicker from 'react-native-date-picker'
 import Onibus from '../../assets/back-home.jpg';
-import { Dimensions } from 'react-native';
+import api from '../services/api';
+import BackHome from '../../assets/home3.png';
 
 export default function Home() {
     const navigation = useNavigation();
     const [userName, setUserName] = useState('');
+    const [userCpf, setUserCpf] = useState('');
+    const [userTell, setUserTell] = useState('');
+    const [userEmail, setUserEmail] = useState('');
+    const [empresaNome, setEmpresaNome] = useState('');
+    const [empresaEmail, setEmpresaEmail] = useState('');
+    const [empresaTell, setEmpresaTell] = useState('');
     const [rotaInicio, setRotaInicio] = useState('');
     const [rotaFim, setRotaFim] = useState('');
-    const [servicosEncontrados, setServicosEncontrados] = useState([]);
-    const [mensagem, setMensagem] = useState('Serviços Encontrados:');
-    const [contratos, setContratos] = useState([]);
-    useEffect(() => {
-        const fetchUserData = async () => {
-            try {
-                const token = await AsyncStorage.getItem('userToken');
-                if (token) {
-                    const userResponse = await api.get('/client', {
-                        headers: {
-                            'Authorization': `Bearer ${token}`
-                        }
-                    });
-                    setUserName(userResponse.data.nome);
+    const [empresaEncontrada, setEmpresaEncontrada] = useState([]);
+    const [mensagem, setMensagem] = useState('Usuário sem contrato ativo...')
+    const [modalColor, setModalColor] = useState('#FF0000');
+    const [showModal, setShowModal] = useState(false);
+    const [errorTotais, setErrorTotais] = useState('');
+    const [empresa, setEmpresa] = useState([]);
+    const [animationPlayed, setAnimationPlayed] = useState(false);
+    const route = useRoute();
 
-                    const contratosResponse = await api.get('/contrato', {
-                        headers: {
-                            'Authorization': `Bearer ${token}`
-                        }
-                    });
-                    if (contratosResponse.data.length > 0) {
-                        setContratos(contratosResponse.data);
-                        setMensagem('');
-                    } else {
-                        setContratos([]);
-                        setMensagem('Nenhum Serviço Encontrado');
-                    }
-                }
-            } catch (error) {
-            }
-        };
-
-        fetchUserData();
-    }, []);
+    const showAndHideError = (message) => {
+        setErrorTotais(message);
+        setShowModal(true);
+        setModalColor('#FF0000');
+        setTimeout(() => {
+          setShowModal(false);
+          setErrorTotais('');
+        },1500);
+      };
     
-    const buscarServicosOferta = async () => {
+      const showAndHideSuccess = (message) => {
+        setErrorTotais(message);
+        setShowModal(true);
+        setModalColor('#00A925');
+        setTimeout(() => {
+          setShowModal(false);
+          setErrorTotais('');
+        }, 1500);
+      };
+      useEffect(() => {
+        if (route.name === 'Home' && !animationPlayed) {
+            setAnimationPlayed(true);
+        }
+    }, [route]);
+    
+    const fetchUserData = async () => {
         try {
-            const response = await api.get('/servico-oferta', {
-                params: {
-                    rota_inicio: rotaInicio,
-                    rota_fim: rotaFim,
-                },
-            });
-            const servicos = response.data;
-            if (servicos.length > 0) {
-                setServicosEncontrados(servicos);
-                setMensagem('');
-            } else {
-                setServicosEncontrados([]);
-                setMensagem('Nenhum Serviço Encontrado:');
+            const token = await AsyncStorage.getItem('userToken');
+            if (token) {
+                const userResponse = await api.get('/client', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                setUserName(userResponse.data.nome);
+                setUserCpf(userResponse.data.cpf);
+                setUserEmail(userResponse.data.email);
+                setUserTell(userResponse.data.telefone);
+
+                const empresaResponse = await api.get('/empresa', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                setEmpresaNome(empresaResponse.data.nome);
+                setEmpresaTell(empresaResponse.data.telefone);
+                setEmpresaEmail(empresaResponse.data.email);
+                if (empresaResponse.data.length > 0) {
+                    setEmpresa(empresaResponse.data);
+                    setEmpresaEncontrada(empresa);
+                    setMensagem('');
+                } else {
+                    setContratos([]);
+                    setMensagem('Nenhum Contrato Encontrado...');
+                }
             }
         } catch (error) {
-            console.log('Erro ao buscar serviços de oferta:', error);
-            setServicosEncontrados([]);
-            setMensagem('Erro ao buscar serviços...');
+            console.log('Error fetching user data:', error);
+            if (error.response && error.response.status === 500) {
+                console.log('Erro interno no servidor. Por favor, tente novamente mais tarde.');
+                console.log('Ocorreu um erro ao buscar os dados do usuário. Por favor, tente novamente mais tarde.');
+                showAndHideError("Erro ao buscar os dados do usuário...");
+            } else {
+                console.log('Erro ao buscar os dados do usuário.');
+                showAndHideError("Erro ao buscar os dados do usuário.");
+                console.log(error);
+            }
         }
     };
 
     useEffect(() => {
-        if (rotaInicio !== '' && rotaFim !== '') {
-            buscarServicosOferta();
-        }
-    }, [rotaInicio, rotaFim]);
+        fetchUserData();
+    }, []);
+
+    const formatarPreco = (preco) => {
+        return `R$ ${preco.toFixed(2).replace('.', ',')}`;
+    };
 
     return (
-        <View style={styles.container}>
-            <StatusBar translucent backgroundColor="transparent" />
-            <View style={styles.containerForm}>
-             {contratos.length > 0 ? (
-                    
-                    <View>
-                        <Text style={styles.infoHeaderText}>Contratos Encontrados:</Text>
-                        {contratos.map((contrato, index) => (
-                            <View key={index}>
-                                <Text>Contrato: {contrato.nome}</Text>
-                                <Text>Rota Início: {contrato.rota_inicio}</Text>
-                                <Text>Rota Fim: {contrato.rota_fim}</Text>
-                            </View>
-                        ))}
+        <SafeAreaView style={styles.container}>
+            <Image source={BackHome} style={styles.backgroundImage} resizeMode='cover' />
+            <Modal visible={showModal} transparent>
+                    <Animatable.View animation="fadeInDown" duration={300} style={styles.modalContainer}>
+                        <Animatable.View animation="fadeInUp" duration={1000} style={[styles.modalContent, { backgroundColor: modalColor }]}>
+                         <Text style={styles.modalMessage}>{errorTotais}</Text>
+                        </Animatable.View>
+                    </Animatable.View>
+                </Modal>
+            <StatusBar barStyle="light-content" />
+                    <View style={styles.formHeader}>
+                        <Text style={styles.welcomeText}>Olá, </Text>
+                        <Text style={styles.usernameText}>{userName}</Text>
                     </View>
-                ) : (
+                    <View style={styles.infospessoais}>
+                    <Feather name="phone" size={20} color={'#fff'} style={styles.PinValor} />
+                        <Text style={styles.infoptext}>{userTell}</Text>
+                    </View>
+                    <View style={styles.infospessoais}>
+                    <Feather name="lock" size={20} color={'#fff'} style={styles.PinValor} />
+                        <Text style={styles.infoptext}>{userCpf}</Text>
+                    </View>
+                    <View style={styles.infospessoais}>
+                    <Feather name="mail" size={20} color={'#fff'} style={styles.PinValor} />
+                        <Text style={styles.infoptext}>{userEmail}</Text>
+                    </View>
                     <View>
-                        <View style={styles.infoHeader}>
-                            <Text style={styles.infoHeaderText}>Procure sua empresa :</Text> 
-                        </View>
+                    {empresaEncontrada.length > 0 ? (
                         <View>
-                        <Text style={styles.infoText}>Informe seu Endereço de Partida:</Text>
-                        <TextInput
-                        placeholder="Endereço de Partida"
-                        keyboardType="adress"
-                        style={styles.inputEndereço}
-                        onChangeText={(text) => setRotaInicio(text)}
-                        />
-                        <Text style={styles.infoDica}>Dica: Este será o endereço de sua residência ou local de onde deseja embarcar quando escolher um contrato de transporte.</Text>
-                        <Text style={styles.infoText}>Informe seu Endereço de Chegada:</Text>
-                        <TextInput
-                        placeholder="Endereço de Chegada"
-                        keyboardType="adress"
-                        style={styles.inputEndereço}
-                        onChangeText={(text) => setRotaFim(text)}
-                        />
-                        <Text style={styles.infoDica}>Dica: Este será o endereço do seu destino final (Universidade, Faculdade, Colégio etc...)</Text>
+                    <Animatable.View
+                         animation={animationPlayed ? 'fadeInLeft' : null}
+                          duration={800}
+                            style={styles.container1}
+                            >
+                            <View style={styles.empresacontratada}>
+                            <Text style={styles.Nomeempresa}>Rafis Lc</Text>
+                            </View>
+                        </Animatable.View>
+                    <Animatable.View
+                            animation={animationPlayed ? 'fadeInRight' : null}
+                                duration={800}
+                            style={styles.container2}
+                             >
+                            <View style={styles.InfoEmpresaBack}>
+                            <Text style={styles.InfosE}>Rafis Lc</Text>
+                            </View>
+                    </Animatable.View>
                         </View>
+                    ) : (
+                    <View>
+                        <Animatable.View
+                         animation={animationPlayed ? 'fadeInLeft' : null}
+                          duration={800}
+                            style={styles.container1}
+                            >
+                            <View style={styles.empresacontratada}>
+                            <Text style={styles.Nomeempresa}>Rafis Lc</Text>
+                            </View>
+                        </Animatable.View>
+                    <Animatable.View
+                            animation={animationPlayed ? 'fadeInRight' : null}
+                                duration={800}
+                            style={styles.container2}
+                             >
+                            <View style={styles.InfoEmpresaBack}>
+                            <Text style={styles.InfosE}>Rafis Lc</Text>
+                            </View>
+                    </Animatable.View>
+                </View>
+                    
+                    
                         
-                        {mensagem ? (
-                <View>
-                    <View style={styles.infoHeader}>
-
-                            <Text style={styles.infoHeaderText}>{mensagem}</Text>
-                            <Text></Text>
-                        </View>
-                    <Image
-                                source={SearchContrato}
-                                style={{ height: "65%", 
-                                width: "100%",  
-                                alignSelf: "center", 
-                                marginBottom:'0%',
-                             }}
-                            />
-                </View>
-                ) : (
-                <View>
-                    {servicosEncontrados.map((servico, index) => (
-                        <Text key={index} style={styles.servicoText}>{servico.nome}</Text>
-                    ))}
-                </View>
-                   )}
-           
-             </View>
-           )}
-        </View> 
-            
-            
-       </View>
+                        )}
+            </View>
+        </SafeAreaView>
     );
-};
+}
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        zIndex: 0,
-        backgroundColor: 'white',
+        backgroundColor: '#fff',
     },
-    buttontext: {
-        fontSize: 18,
-        color: 'white',
-        fontWeight: 'bold',
+    mensagem:{
+        color:'#00413E',
+        textAlign:'center',
+        marginTop:'70%',
     },
-    button: {
-        backgroundColor: '#005C58',
-        width: '90%',
-        borderRadius: 10,
-        paddingVertical: 8,
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginTop: 80,
-        alignSelf: 'center',
-        zIndex: 2,
-    },
-    containerpesquisa: {
-        backgroundColor: '#ffff',
-        borderRadius:10,
-        zIndex:5,
-        width:'90%',
-        alignSelf:'center',
-        height:'40%',
-        marginTop:'50%',
+    backgroundImage:{
+        width:'100%',
+        height:'110%',
         position:'absolute',
+    },
+    PinValor:{
+        marginRight:5,
+    },
+    infoptext:{
+       color:'#EFEFEF',
+    },
+    infospessoais:{flexDirection:'row', marginLeft:5,marginTop:5,},
+    container1:{
+        marginTop:150,
+        backgroundColor:'#ffff',
+        padding:10,
+        alignSelf:'center',
+        borderRadius:5,
+        width:'90%',
+        height:200,
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 2,
+        },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+        elevation: 4,
+    },
+    container2:{
+        marginTop:30,
+        backgroundColor:'#ffff',
+        padding:10,
+        height:200,
+        alignSelf:'center',
+        borderRadius:5,
+        width:'90%',
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 2,
+        },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+        elevation: 4,
+    },
+    formHeader: {
+        flexDirection:'row',
+        marginTop:40,
+        width:'100%',
+        marginLeft:10,
+        textAlign:'center',
+        paddingBottom:4,
+        paddingTop:10,
+    },
+    empresacontratada:{
+        
+    },
+    InfoEmpresaBack:{
+        
+    },
+    InfoEmpresa:{
+        color:'rgba(0, 0, 0, 0.95)',
+        fontSize:14,
+        fontWeight:'500',
+        marginTop:'5%',
+        textAlign:'center',
+    },
 
-    },
-    inputEndereço:{
-        paddingLeft: 0,
-        alignSelf:'center',
+    InfosE:{
+        color:'#fff',
+        paddingBottom:10,
+        paddingTop:10,
+        fontSize:28,
+        fontWeight:'600',
         textAlign:'center',
-        height: 50,
-        marginTop: 40,
-        fontSize: 12,
-        width:'90%',
-        borderRadius:10,
-        color:'#00413E',
-        backgroundColor: 'rgba(0, 92, 88, 0.07)',
-        borderColor: '#005C58',
+        letterSpacing:5,
+        textTransform:'uppercase',
     },
-    inputEndereço1:{
-        paddingLeft: 0,
-        alignSelf:'center',
+    nomeE:{
+        color:'rgba(0, 0, 0, 0.95)',
+        fontSize:14,
+        fontWeight:'500',
+        marginTop:'10%',
+        marginLeft:10,
+        textAlign:'left',
+    },
+
+    Nomeempresa:{
+        color:'#fff',
+        paddingBottom:10,
+        paddingTop:10,
+        fontSize:28,
+        fontWeight:'600',
         textAlign:'center',
-        height: 50,
-        marginTop: 20,
-        fontSize: 12,
-        borderRadius:10,
-        width:'90%',
-        color:'#00413E',
-        backgroundColor: 'rgba(0, 92, 88, 0.07)',
-        borderColor: '#005C58',
+        letterSpacing:5,
+        textTransform:'uppercase',
     },
+    welcomeText: {
+        fontSize: 24,
+        fontWeight: '600',
+        
+        color:'#ffff',
+        textShadowColor: 'rgba(0, 0, 0, 0.15)',
+        textShadowOffset: { width: 1, height: 3 },
+        textShadowRadius: 7,
+    },
+    usernameText: {
+        fontSize: 24,
+        fontWeight: '600',
+      
+        color:'#ffff',
+        textShadowColor: 'rgba(0, 0, 0, 0.15)',
+        textShadowOffset: { width: 1, height: 3},
+        textShadowRadius: 7,
+        
+    },
+    modalContainer: {
+        width: "100%",
+        opacity: 1,
+        top: '86%',
+        alignSelf: "center",
+      },
+      modalContent:{
+          height:'25%',
+          width:'95%',
+          borderRadius:5,
+          marginLeft:10,
+      },
+      modalMessage: {
+          fontSize: 14,
+          fontWeight: "500",
+          textAlign: "center",
+          justifyContent:'center',
+          paddingTop:14,
+          color: "white",
+          
+          
+      },
     
-    TextHeader: {
-        fontSize: 22,
-        width: '100%',
-        height: 'auto',
-        fontWeight: '900',
-        marginTop: '5%',
-        alignSelf: 'center',
-        textAlign: 'center',
-        position:'absolute',
-        color: "#ffff",
-        zIndex: 1,
-    },
 });

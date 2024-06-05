@@ -76,7 +76,6 @@ export default function Login() {
         console.log('Resposta da API:', response.data);
   
         if (response.data.token) {
-          
           await AsyncStorage.setItem('userToken', response.data.token);
           showAndHideSuccess('Sucesso ao Entrar');
           setIsLoading(false);
@@ -113,7 +112,7 @@ export default function Login() {
   return (
     <View style={styles.container}>
       
-      <StatusBar backgroundColor="#005C58" barStyle="light-content"/>
+      <StatusBar backgroundColor="rgba(0, 141, 134, 1)" barStyle="light-content"/>
       <Text style={styles.bemvindo}>Bem Vindo(a)</Text>
       <Animatable.View animation="fadeInUp" delay={200} style={styles.containerform}>
         <Text style={styles.logintext}>Login</Text>
@@ -139,7 +138,7 @@ export default function Login() {
           <TouchableOpacity
             style={styles.togglepassword}
             onPress={() => setShowPassword(!showPassword)}>
-            <Feather name={showPassword ? 'eye' : 'eye-off'} size={18} color="#005C58" />
+            <Feather name={showPassword ? 'eye' : 'eye-off'} size={18} color="#c3c3c3" />
           </TouchableOpacity>
         </View>
         <TouchableOpacity style={styles.buttonEsqueceuSenha} onPress={() => navigation.navigate('RecuperarSenha')}>
@@ -168,7 +167,7 @@ export default function Login() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#005C58',
+    backgroundColor: 'rgba(0, 141, 134, 1)',
   },
   errorText1:{
     color:'red',
@@ -245,7 +244,7 @@ const styles = StyleSheet.create({
     left:20,
   },
   cadastro: {
-    color: '#00413E', 
+    color: '#343434', 
     textAlign:'center',
     position:'absolute',
     width:'100%',
@@ -275,10 +274,13 @@ const styles = StyleSheet.create({
     fontSize: 24,
     width: '25%',
     textAlign:'center',
-    fontWeight: '700',
+    fontWeight: '500',
     marginTop: 45,
+    textShadowColor: 'rgba(0, 0, 0, 0.25)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 7,
     alignSelf: 'center',
-    color: "#005C58",
+    color: "rgba(0, 141, 134, 1)",
     zIndex: 0,
   },
   containerHeader: {
@@ -299,7 +301,7 @@ const styles = StyleSheet.create({
   },
  
   button: {
-    backgroundColor: '#005C58',
+    backgroundColor: 'rgba(0, 141, 134, 1)',
     width: '80%', 
     borderRadius: 10,
     paddingVertical: 8,
@@ -314,11 +316,11 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   buttonEsqueceuSenha: {
-    marginTop: 5,
+    marginTop: 10,
     width: '100%',
   },
   Esenhatext: {
-    color: '#00413E',
+    color: '#343434',
     fontSize: 12,
     textDecorationLine: "underline",
     textAlign:'right', 

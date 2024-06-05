@@ -20,7 +20,7 @@ import {useNavigation }from '@react-navigation/native';
             </View>
 
             <Animatable.View delay={600} animation="fadeInUp" style={styles.containerForm}>
-            <Text style={styles.ApresentaApp}> Solução  eficiente na procura de transportes para Universitários. Encontre aqui a melhor empresa para te levar até sua faculdade!</Text>
+            <Text style={styles.ApresentaApp}> Solução  eficiente na procura de transportes para Universitários. Encontre aqui a melhor empresa para te levar até sua Instituição de Ensino!</Text>
             <Text style={styles.FÇlogin}>Faça o login ou Cadastre-se para começar</Text>
             <TouchableOpacity style={styles.buttonlogin}
             onPress={() => navigation.navigate('SignIn')}>
@@ -74,7 +74,7 @@ const styles = StyleSheet.create({
 
     },
     ApresentaApp:{
-        color: '#00413E',
+        color: '#343434',
         fontSize: 24,
         fontWeight: 'bold',
         marginTop: 15,
@@ -85,10 +85,11 @@ const styles = StyleSheet.create({
         color: '#a1a1a1',
         textAlign: 'center',
         right: 3,
+        marginTop:10,
     },
     buttonlogin: {
         position: 'absolute',
-        backgroundColor: '#005C58',
+        backgroundColor: 'rgba(0, 141, 134, 1)',
         borderRadius: 10,
         paddingVertical: 8,
         width: '45%',
@@ -100,7 +101,7 @@ const styles = StyleSheet.create({
     },
     buttoncadastro: {
         position: 'absolute',
-        backgroundColor: '#005C58',
+        backgroundColor: 'rgba(0, 141, 134, 1)',
         borderRadius: 10,
         paddingVertical: 8,
         width: '45%',

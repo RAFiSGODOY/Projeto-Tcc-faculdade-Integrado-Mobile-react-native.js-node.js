@@ -3,6 +3,7 @@ import Welcome from '../pages/Welcome';
 import SignIn from '../pages/SignIn';
 import Cadastro from '../pages/Cadastro';
 import RecuperarSenha from '../pages/RecuperarSenha';
+import TabRoutes from '../TabRoutes';
 
 const Stack= createNativeStackNavigator();
 
@@ -28,6 +29,11 @@ export default function Routes(){
             <Stack.Screen 
             name="Cadastro"
             component={Cadastro}
+            options={{headerShown: false}} 
+            />
+            <Stack.Screen 
+            name="TabRoutes"
+            component={TabRoutes}
             options={{headerShown: false}} 
             />
            

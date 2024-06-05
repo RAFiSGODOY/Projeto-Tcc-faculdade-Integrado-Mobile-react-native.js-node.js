@@ -271,14 +271,15 @@ export default function Cadastro() {
             }, 1500);
 
         } catch (error) {
-            showAndHideError('Erro ao cadastrar usuário');
+            showAndHideError('Erro no servidor!');
+            setIsLoading(false);
 
         }
     };
 
     return (
         <View style={styles.container}>
-            <StatusBar backgroundColor="#005C58" barStyle="light-content"/>
+            <StatusBar backgroundColor="rgba(0, 141, 134, 1)" barStyle="light-content"/>
             <Text style={styles.ApresentaApp}>Cadastro</Text>
             
             
@@ -479,7 +480,7 @@ const styles = StyleSheet.create({
         flex: 1,
         zIndex: 0,
         marginBottom:0,
-        backgroundColor:"#005C58",
+        backgroundColor:"rgba(0, 141, 134, 1)",
     },
     errorText:{
         color:'red',
@@ -537,19 +538,19 @@ const styles = StyleSheet.create({
     line1: {
         flex: 1,
         height: 0.5,
-        backgroundColor: '#005C58',
+        backgroundColor: '#7C7C7C',
         marginRight: 5,
     },
     line2: {
         flex: 1,
         height: 0.5,
-        backgroundColor: '#005C58',
+        backgroundColor: '#7C7C7C',
         marginLeft: 5,
     },
     infoHeaderText: {
         fontSize: 18,
-        color: '#005C58',
-        fontWeight: 'bold',
+        color: '#4B4B4B',
+        fontWeight: '600',
     },
     modalContainer: {
         width: "100%",
@@ -630,7 +631,7 @@ const styles = StyleSheet.create({
     datanascimentotext: {
         width: '40%',
         bottom: 5,
-        color: '#005C58',
+        color: '#4B4B4B',
     },
     campoDataNascimento: {
         height: 40,
@@ -643,7 +644,7 @@ const styles = StyleSheet.create({
         color:'#00413E',
     },
     button: {
-        backgroundColor: '#005C58',
+        backgroundColor: 'rgba(0, 141, 134, 1)',
         width: '90%',
         borderRadius: 10,
         paddingVertical: 8,
