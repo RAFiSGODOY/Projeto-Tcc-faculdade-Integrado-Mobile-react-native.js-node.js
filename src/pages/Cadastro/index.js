@@ -4,9 +4,9 @@ import * as Animatable from 'react-native-animatable';
 import { useNavigation } from '@react-navigation/native';
 import { TextInputMask } from 'react-native-masked-text';
 import moment from 'moment';
-import WelcomeIMG from '../../assets/WelcomeIMG.png';
-import api from '../services/api';
+import api from '../../services/api';
 import { StatusBar } from 'react-native';
+import Loading from '../../components/Loading';
 
 export default function Cadastro() {
     const navigation = useNavigation();
@@ -37,6 +37,7 @@ export default function Cadastro() {
         bairro: '',
         uf: ''
     });
+   
 
     const getAdressFromApi = useCallback(() => {
         fetch(`https://viacep.com.br/ws/${adress.cep}/json/`)
@@ -48,7 +49,7 @@ export default function Cadastro() {
                     localidade: data.localidade || prevState.localidade,
                     logradouro: data.logradouro || prevState.logradouro,
                     uf: data.uf || prevState.uf
-                }));
+                })); 
                 setCep(data.cep);
                 setBairro(data.bairro);
                 setCidade(data.localidade);
@@ -459,8 +460,8 @@ export default function Cadastro() {
                             style={[styles.campoBairro, camposObrigatorios.includes('passwordconfirmado') && styles.campoObrigatorio]}
                         />
                         {fieldErrors.passwordconfirmado && <Text style={styles.errorText}>{fieldErrors.passwordconfirmado}</Text>}
-                        <TouchableOpacity style={styles.buttonFinalizar} onPress={proximaEtapa}>
-                        <Text style={styles.buttontext}>{isLoading ? 'Carregando...' : 'Finalizar Cadastro'}</Text>
+                        <TouchableOpacity style={styles.button} onPress={proximaEtapa}>
+                        {isLoading ? <Loading /> : <Text style={styles.buttontext}>Cadastrar-se</Text>}
                         </TouchableOpacity>
                     </Animatable.View>
                 )}
@@ -651,15 +652,20 @@ const styles = StyleSheet.create({
     },
     button: {
         backgroundColor: 'rgba(0, 141, 134, 1)',
-        width: '90%',
         borderRadius: 10,
-        paddingVertical: 8,
-        justifyContent: 'center',
         alignItems: 'center',
-        marginTop: 30,
-        alignSelf: 'center',
-        zIndex: 2,
-    },
+        justifyContent: 'center',
+        height: 50,
+        marginTop: 20,
+      },
+      buttonLoading: {
+        backgroundColor: '#ddd',
+        borderRadius: 10,
+        alignItems: 'center',
+        justifyContent: 'center',
+        height: 50,
+        marginTop: 20,
+      },
     buttontext: {
         fontSize: 18,
         color: 'white',
@@ -680,17 +686,6 @@ const styles = StyleSheet.create({
         fontSize: 18,
         color: 'white',
         fontWeight: 'bold',
-    },
-    buttonFinalizar: {
-        backgroundColor: '#005C59',
-        width: '80%',
-        borderRadius: 10,
-        paddingVertical: 8,
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginTop: 30,
-        alignSelf: 'center',
-        zIndex: 2,
     },
     buttontextFinalizar: {
         fontSize: 18,

@@ -1,18 +1,21 @@
-import React, { useState, useEffect} from 'react';
+import React, { useState, useEffect, useCallback} from 'react';
 import { View, Text, TextInput,Image, StyleSheet, TouchableOpacity, ScrollView, StatusBar, Modal, SafeAreaView} from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { SearchBar } from 'react-native-elements';
 import { Feather } from '@expo/vector-icons';
 import * as Animatable from 'react-native-animatable';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import api from '../services/api';
-import SearchContrato from '../../assets/SearchContrato.jpg';
+import api from '../../services/api';
 import Onibus from '../../assets/semfundo.png';
 import moment from 'moment-timezone';
+import Loading from '../../components/Loading';
+import { useFocusEffect } from '@react-navigation/native';
 
 export default function Procurar() {
     const navigation = useNavigation();
     const [rotaInicio, setRotaInicio] = useState('');
     const [rotaFim, setRotaFim] = useState('');
+    const [idEmpresa, setIdEmpresa] = useState('');
     const [servicosEncontrados, setServicosEncontrados] = useState([]);
     const [mensagem, setMensagem] = useState('Nenhum serviço encontrado');
     const [contratos, setContratos] = useState([]);
@@ -24,6 +27,7 @@ export default function Procurar() {
     const [modalColor, setModalColor] = useState('#FF0000'); 
     const [showModal, setShowModal] = useState(false);
     const [errorTotais, setErrorTotais] = useState('');
+    const [timeoutId, setTimeoutId] = useState(null);
     const [temContratosAtivos, setTemContratosAtivos] = useState(false);
     const [valorTotalPreco, setValorTotal] = useState('');
     const showAndHideError = (message) => {
@@ -35,7 +39,23 @@ export default function Procurar() {
           setErrorTotais('');
         },1500);
       };
-    
+      useFocusEffect(
+        useCallback(() => {
+          setServicosEncontrados([]); 
+          setMensagem('Nenhum serviço encontrado'); 
+          setRotaInicio('');
+          verificarEtapa();
+          
+           
+        }, []) 
+      );
+
+      const verificarEtapa = () =>{
+        if(temContratosAtivos == false){
+            setEtapa(1);
+        }
+        return
+      }
       const showAndHideSuccess = (message) => {
         setErrorTotais(message);
         setShowModal(true);
@@ -45,43 +65,70 @@ export default function Procurar() {
           setErrorTotais('');
         }, 1500);
       };
-    useEffect(() => {
-        const fetchUserData = async () => {
-            try {
-                const token = await AsyncStorage.getItem('userToken');
-                if (token) {
-                    const contratosResponse = await api.get('/contrato', {
-                        headers: {
-                            'Authorization': `Bearer ${token}`
+      const verificarContrato = useCallback(async () => {
+       
+        try {
+            const token = await AsyncStorage.getItem('userToken');
+            if (token) {
+              const contratosResponse = await api.get('/contrato', {
+                headers: { 'Authorization': `Bearer ${token}` }
+              });
+              if (contratosResponse.data.length > 0) {
+                navigation.navigate('Home'); 
+              } else {
+                showAndHideError('Contrate um serviço para ter acesso.'); 
+                verificarEtapa();
+              }
+            }
+          } catch (error) {
+            console.error("Erro ao verificar contratos:", error);
+            showAndHideError('Erro ao verificar contratos.');
+          }
+      }, []);
+      useFocusEffect(
+        useCallback(() => {
+            const fetchUserData = async () => {
+                try {
+                    const token = await AsyncStorage.getItem('userToken');
+                    if (token) {
+                        const contratosResponse = await api.get('/contrato', {
+                            headers: {
+                                'Authorization': `Bearer ${token}`
+                            }
+                        });
+                        if (contratosResponse.data.length > 0) {
+                            console.log("REsult")
+                            setContratos(contratosResponse.data);
+                            setTemContratosAtivos(true);
+                        } else {
+                            setContratos([]);
+                            console.log("REsult2")
+                            setTemContratosAtivos(false);
+                            console.log("ativo?")
+                            console.log(temContratosAtivos)
                         }
-                    });
-                    if (contratosResponse.data.length > 0) {
-                        setContratos(contratosResponse.data);
-                        setMensagem('');
-                        setTemContratosAtivos(true);
-                        console.log("desativei")
+                    }
+                } catch (error) {
+                    console.log('Error fetching user data:', error);
+                    if (error.response && error.response.status === 500) {
+                        console.log('Erro interno no servidor. Por favor, tente novamente mais tarde.');
+                        console.log('Ocorreu um erro ao buscar os dados do usuário. Por favor, tente novamente mais tarde.');
+                        showAndHideError("Erro ao buscar os dados do usuário, tente novamente em alguns minutos!");
                     } else {
-                        setContratos([]);
-                        setMensagem('Nenhum Serviço Encontrado');
-                        setTemContratosAtivos(false);
+                        console.log('Erro ao buscar os dados do usuário.');
+                        showAndHideError("Erro ao buscar os dados do usuário.");
+                        console.log(error);
                     }
                 }
-            } catch (error) {
-                console.log('Error fetching user data:', error);
-                if (error.response && error.response.status === 500) {
-                    console.log('Erro interno no servidor. Por favor, tente novamente mais tarde.');
-                    console.log('Ocorreu um erro ao buscar os dados do usuário. Por favor, tente novamente mais tarde.');
-                    showAndHideError("Erro ao buscar os dados do usuário, tente novamente em alguns minutos!");
-                } else {
-                    console.log('Erro ao buscar os dados do usuário.');
-                    showAndHideError("Erro ao buscar os dados do usuário.");
-                    console.log(error);
-                }
-            }
-        };
-    
-        fetchUserData();
-    }, []);
+            };
+
+            setServicosEncontrados([]);
+            setMensagem('Nenhum serviço encontrado');
+            setRotaInicio('');
+            fetchUserData();
+            verificarEtapa();
+        }, [])
+    );
     const acceptService = async () => {
         try {
             const dataAtual = new Date(); 
@@ -134,12 +181,17 @@ export default function Procurar() {
                 });
                 console.log('Contrato criado com sucesso:', response.data);
                 console.log('Serviço aceito:', selectedServico);
+                console.log(selectedServico, response.data)
                 setTemContratosAtivos(true);
                 showAndHideSuccess("Contrato aceito com sucesso!");
                 setEtapa(2);
             }
         } catch (error) {
-            console.log('Erro ao criar contrato:', error.message);
+            console.error('Erro ao criar contrato:', {
+                tipo: error.name,
+                status: error.response?.status, 
+                dadosDaResposta: error.response?.data
+              });
             
             showAndHideError("Erro ao criar contrato, Tente novamente mais tarde!");
         }
@@ -159,7 +211,6 @@ export default function Procurar() {
     
     const buscarServicosOferta = async () => {
         setIsLoading(true);
-        console.log(rotaFim, rotaInicio);
         if(!rotaInicio || !rotaFim ){
         try {
             const response = await api.get('/servico-oferta', {
@@ -176,7 +227,6 @@ export default function Procurar() {
             } else {
                 setServicosEncontrados([]);
                 setMensagem('Nenhum Serviço Encontrado');
-                showAndHideError("Nenhum Serviço Encontrado");
                 setIsLoading(false);
             }
         } catch (error) {
@@ -192,14 +242,14 @@ export default function Procurar() {
     };
     const openModal = (servico) => {
         if (temContratosAtivos) {
-            console.log('Usuário já possui contratos ativos. Não é possível contratar um novo serviço.');
             showAndHideError("Você já possui um Contrato Ativo!");
             return; 
-        }
-        setSelectedServico(servico);
+        }else {
+           setSelectedServico(servico);
         setValorTotal(servico.preco);
-        console.log(valorTotalPreco)
-        setIsModalVisible(true);
+        setIsModalVisible(true); 
+        }
+        
     };
 
     const closeModal = () => {
@@ -211,7 +261,7 @@ export default function Procurar() {
 
     return (
         <SafeAreaView style={styles.container}> 
-        <Image source={Onibus} style={styles.backgroundImage} resizeMode='cover' />
+        <View style={styles.headerVerde}></View>
                 <Modal visible={showModal} transparent>
                     <Animatable.View animation="fadeInLeft" duration={300} style={styles.modalContainer}>
                         <Animatable.View animation="bounceIn" duration={1000} style={[styles.modalContent, { backgroundColor: modalColor }]}>
@@ -220,94 +270,97 @@ export default function Procurar() {
                     </Animatable.View>
                 </Modal>
             <StatusBar translucent backgroundColor="transparent" />
-           
             <View style={styles.innerContainer}>
-                <View style={styles.infoHeader}>
-                        <Text style={styles.TextHeader}>Encontre o Melhor Serviço</Text> 
-                    </View>
-                <Animatable.View animation="fadeInDown" duration={800} style={styles.formContainer}>
-                    
-                    <View style={styles.InputContainer}>
-                        <Feather name="map-pin" size={22} color={'#42E619'} style={styles.Pin} />
-                        <TextInput
-                            placeholder="Cidade de Partida"
-                            placeholderTextColor="#7C7C7C"
-                            style={styles.inputEndereco}
-                            onChangeText={(text) => setRotaInicio(text)}
-                        />
-                    </View>
-                    <Text style={styles.infoDica}>Dica: Informe a Cidade onde sua Instituição de Ensino é localizada.</Text>
-                    <View style={styles.InputContainer2}>
-                        <Feather name="map-pin" size={22} color={'#E9ED19'} style={styles.Pin} />
-                        <TextInput
-                            placeholder="Cidade de Destino"
-                            placeholderTextColor="#7C7C7C"
-                            style={styles.inputEndereco}
-                            onChangeText={(text) => setRotaFim(text)}
-                        />
-                    </View>
-                    <Text style={styles.infoDica2}>Dica: Informe a Cidade no qual deseja embarcar no transporte com destino a sua Instituição de Ensino.</Text>
-                    <TouchableOpacity style={styles.button} onPress={buscarServicosOferta}>
-                        <Text style={styles.buttontext}>{isLoading ? 'Buscando...' : 'Pesquisar '}</Text>
-                        <Feather name="search" size={22} color={'#ffff'} style={styles.PinSearch} />
-                    </TouchableOpacity>
+                
+                <Animatable.View animation="fadeInDown" duration={800}>
+                        <SearchBar
+                            placeholder="Procure Contratos em sua Cidade"
+                            value={rotaInicio}
+                            containerStyle={styles.searchBarContainer}
+                            inputContainerStyle={styles.searchBarInputContainer}
+                            inputStyle={styles.searchBarInput}
+                            searchIcon={{ size: 26, color: '#7C7C7C' }}
+                            clearIcon={{ size: 22, color: '#7C7C7C' }} 
+                            lightTheme 
+                            round 
+                            showLoading={isLoading} 
+                            onChangeText={(text) => {
+                                setRotaInicio(text);
+                                if (timeoutId) { 
+                                  clearTimeout(timeoutId); 
+                                }
+                                setTimeoutId(setTimeout(() => buscarServicosOferta(), 1500)); 
+                              }}
+                            />
                 </Animatable.View >
                 <Animatable.View animation="fadeInUp" duration={800} style={styles.resultsContainer}>
+                    
                     {servicosEncontrados.length > 0 ? (
+                        
                         <ScrollView style={styles.servicosContainer} showsVerticalScrollIndicator={false}>
+                            <View style={styles.resultadoContainer}>
+                                <Text style={styles.resultadoText}>Resultados da sua Busca</Text>
+                            </View>
                             {servicosEncontrados.map((servico, index) => (
-                                <TouchableOpacity 
+                                <TouchableOpacity activeOpacity={0.9}
                                 key={index} 
-                                style={[
-                                    styles.servicoItem, 
-                                    contratos.length > 0 && styles.disabledButton
-                                ]} 
-                                onPress={() => contratos.length === 0 && openModal(servico)}
-                                disabled={contratos.length > 0}
+                                style={styles.servicoItem} 
+                                onPress={() => openModal(servico)}
                             >
                                         <View style={styles.empresapin}>
-                                         <Feather name="briefcase" size={18} color={'#005C58'} style={styles.PinEmpresa} />
-                                        <Text style={styles.precoSimbolo}>R$:</Text>
-                                        <Text style={styles.servicoPreco}>{formatarPreco(servico.preco)},00</Text>
+                                         <Feather name="briefcase" size={18} color={'#6c6c6c'} style={styles.PinEmpresa} />
+                                         <Text style={styles.servicoEmpresa}>{servico.nomeEmpresa}</Text> 
+                                       
                                         </View>
                                         <View style={styles.Rotas}>
                                             <View style={styles.rtI}>
-                                                <Feather name="map-pin" size={20} color={'#42E619'} style={styles.Pin2} />
+                                                <Feather name="map-pin" size={20} color={'#005C58'} style={styles.Pin2} />
                                                 <Text style={styles.servicoRotaInicio}>{servico.rota_inicio}</Text>
                                             </View>
                                             <Text style={styles.Pin3}>X</Text>
                                             <View style={styles.rtF}>
                                                 <Text style={styles.servicoRotaFim}>{servico.rota_fim}</Text>
-                                                <Feather name="map-pin" size={20} color={'#E9ED19'} style={styles.Pin4} />
+                                                <Feather name="map-pin" size={20} color={'#005C58'} style={styles.Pin4} />
                                             </View>
                                         </View> 
                                         <View style={styles.precoContainer}>
-                                       
-                                        <Text style={styles.servicoEmpresa}>{servico.nomeEmpresa}</Text> 
+                                        <Text style={styles.precoSimbolo}>R$:</Text>
+                                        <Text style={styles.servicoPreco}>{formatarPreco(servico.preco)},00</Text>
                                     </View>
                                     
                                 </TouchableOpacity>
                             ))}
                         </ScrollView>
                     ) : (
-                        <Text></Text>
+                        <Text style={styles.textnenhumservico}>Nenhum serviço encontrado</Text>
                     )}
                 </Animatable.View>
             </View>
             <Modal
                 visible={isModalVisible}
-                animationType="slide"
                 transparent={true}
                 onRequestClose={closeModal}
+                animationType="fade"
             >
                 <View style={styles.modalContainer2}>
                     
                     <View style={styles.modalContent2}>
                         {selectedServico && etapa == 1 && (
                            
-                            <Animatable.View animation="fadeInUp" delay={100}>
-                                <Text style={styles.modalTitle2}>Gostaria de Contratar a {selectedServico.nomeEmpresa}?</Text>
-                                <Text style={styles.modalText2}>As informações do Contrato selecionado serão listadas a baixo, clique em "CONTRATAR EMPRESA" somente se estiver com certeza de sua decisão!</Text>
+                            <Animatable.View >
+                                 <View style={styles.infoHeaderModal}>
+                                
+                                <Text style={styles.infoHeaderTextH}>INFORMAÇÕES DO CONTRATO</Text>
+                               
+                                </View>
+                                <TouchableOpacity activeOpacity={0.8} style={styles.modalButton2} onPress={closeModal}>
+                                <Feather name="x" size={22} color={'#4b4b4b'} style={styles.PinFechar} />
+                                </TouchableOpacity>
+                                <View style={styles.containerCaixa01}>
+                                <Feather name="info" size={16} color={'#4b4b4b'} style={styles.PinInfo} />
+                                <Text style={styles.modalText2}>As informações do Contrato selecionado serão listadas a baixo, clique em "QUERO CONTRATAR" somente se tiver CERTEZA de sua decisão!</Text>
+                                </View>
+    
                                 
                                 <View style={styles.infoHeaderModal}>
                                 <View style={styles.line1} />
@@ -316,47 +369,64 @@ export default function Procurar() {
                                 </View>
                                 <View style={styles.RotasEscolhida}>
                                             <View style={styles.rtI}>
-                                                <Feather name="map-pin" size={20} color={'#42E619'} style={styles.Pin2} />
+                                                <Feather name="map-pin" size={20} color={'#005C58'} style={styles.Pin2} />
                                                 <Text style={styles.servicoRotaInicio}>{selectedServico.rota_inicio}</Text>
-                                            </View>
+                                              
+                                            </View>  
+                                            
                                             <Text style={styles.Pin5}>X</Text>
                                             <View style={styles.rtF}>
                                                 <Text style={styles.servicoRotaFim}>{selectedServico.rota_fim}</Text>
-                                                <Feather name="map-pin" size={20} color={'#E9ED19'} style={styles.Pin4} />
+                                                <Feather name="map-pin" size={20} color={'#005C58'} style={styles.Pin4} />
                                             </View>
                                 </View> 
+                                <View style={styles.alinharCity1}>
+                                <Feather name="info" size={14} color={'#4b4b4b'} style={styles.PinInfoCity1} />
+                                <Text style={styles.textCity1}>(Cidade de saída)</Text>
+                                </View>
+                                <View style={styles.alinharCity2}>
+                                <Feather name="info" size={14} color={'#4b4b4b'} style={styles.PinInfoCity2} />
+                                <Text style={styles.textCity2}>(Cidade de Destino)</Text>
+                                </View>
                                 <View style={styles.infoHeaderModal2}>
                                 <View style={styles.line1} />
                                 <Text style={styles.infoHeaderText2}>INFORMAÇÕES DO PAGAMENTO</Text>
                                 <View style={styles.line2} />
                                 </View>
                                 <View style={styles.infospreco}>
-                                <Feather name="dollar-sign" size={20} color={'#005C58'} style={styles.PinValor} />
+                                <Feather name="dollar-sign" size={18} color={'#005C58'} style={styles.PinValor} />
                                 <Text style={styles.modalTextinfs}>Valor R$:</Text>
                                 <Text style={styles.modalTextinfs2}>{formatarPreco(selectedServico.preco)}</Text>
                                 <Text style={styles.modalTextinfs3}>reais.</Text>
                                 </View>
                                 <View style={styles.infospreco}>
-                                <Feather name="calendar" size={20} color={'#005C58'} style={styles.PinValor} />
+                                <Feather name="calendar" size={18} color={'#005C58'} style={styles.PinValor} />
                                 <Text style={styles.modalTextinfs}>Tipo de Pagamento:</Text>
                                 <Text style={styles.modalTextinfs2}>Mensal</Text>
                                 <Text style={styles.modalTextinfs3}>.</Text>
                                 </View>
                                 <View style={styles.infospreco}>
-                                <Feather name="pie-chart" size={20} color={'#005C58'} style={styles.PinValor} />
+                                <Feather name="pie-chart" size={18} color={'#005C58'} style={styles.PinValor} />
                                 <Text style={styles.modalTextinfs}>Duração do Contrato</Text>
                                 <Text style={styles.modalTextinfs2}>1</Text>
                                 <Text style={styles.modalTextinfs3}>ano.</Text>
                                 </View>
-        
+                                <View style={styles.infoHeaderModal2}>
+                                <View style={styles.line1} />
+                                <Text style={styles.infoHeaderText2}>INFORMAÇÕES DE COBRANÇA</Text>
+                                <View style={styles.line2} />
+                                </View>
+                                <View style={styles.cobrançaContainer}> 
+                                <Feather name="info" size={16} color={'#4b4b4b'} style={styles.PinInfo} />
+                                    <Text style={styles.modalText3}>A UniBus não efetua nenhum tipo de cobrança, deixamos a responsabilidade desta tarefa para empresa escolhida pelo cliente. 
+                                    </Text>  
+                                </View>
                                 <View style={styles.modalButtons}>
 
-                                    <TouchableOpacity style={styles.modalButton} onPress={acceptService}>
-                                        <Text style={styles.modalButtonText}>CONTRATAR EMPRESA</Text>
+                                    <TouchableOpacity activeOpacity={0.8} style={styles.modalButton} onPress={acceptService}>
+                                        <Text style={styles.modalButtonText}>QUERO CONTRATAR</Text>
                                     </TouchableOpacity>
-                                    <TouchableOpacity style={styles.modalButton2} onPress={closeModal}>
-                                        <Text style={styles.modalButtonText}>Cancelar</Text>
-                                    </TouchableOpacity>
+                                   
                                     
                                 </View>
                              
@@ -366,9 +436,12 @@ export default function Procurar() {
                            
                             <Animatable.View animation="fadeInUp" delay={200}>
                              
-                                <Text style={styles.modalTitle2}>Obrigado por escolher UniBus!</Text>
-                                <Text style={styles.modalText2}>Parabéns! Você agora possui um Contrato de Transporte com a empresa:</Text>
-                                <Text style={styles.modalTextEmpresa}>"{selectedServico.nomeEmpresa}"</Text>
+                                <Text style={styles.infoHeaderTextH2}>Empresa Contratada!</Text>
+                                <View style={styles.containerCaixa01}>
+                                <Feather name="info" size={16} color={'#7b7b7b'} style={styles.PinCheck} />
+                                <Text style={styles.modalText4}>Agora você possui um contrato de transporte para sua Instituição de Ensino! Fique tranquilo a baixo vamos te informar como prosseguir daqui em diante, sucesso!</Text>
+                                </View>
+                                
                                 <View style={styles.infoHeaderModal}>
                                 <View style={styles.line1} />
                                 <Text style={styles.infoHeaderText}>E   AGORA?</Text>
@@ -397,8 +470,8 @@ export default function Procurar() {
                                 </View>
                                 <View style={styles.modalButtons}>
 
-                                    <TouchableOpacity style={styles.modalButton} onPress={closeModal}>
-                                        <Text style={styles.modalButtonText}>Confirmar e sair</Text>
+                                    <TouchableOpacity activeOpacity={0.8} style={styles.modalButton} onPress={closeModal}>
+                                        <Text style={styles.modalButtonText}>CONFIRMAR E SAIR</Text>
                                     </TouchableOpacity>
                                 </View>
                              
@@ -409,15 +482,120 @@ export default function Procurar() {
                 </View>
            
             </Modal> 
-        </SafeAreaView>
+            <View style={styles.Navigator}>
+            <TouchableOpacity style={styles.NavigationProcurar} onPress={() => navigation.navigate('Procurar')}>
+            <Feather name="search" size={20} color={'#ffff'} style={styles.PinProcurar} />
+              <Text style={styles.NavigationProcurarT}>Procurar</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.NavigationHome} onPress={(verificarContrato)}>
+            <Feather name="briefcase" size={20} color={'#005C58'} style={styles.PinProcurar} />
+              <Text style={styles.NavigationProcurarText}>Contratos</Text>
+            </TouchableOpacity>
+            </View>
+            </SafeAreaView>
     );
 };
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: 'rgba(0, 141, 134, 0.050)',
+        backgroundColor: '#fff',
         
+    },
+    resultadoContainer:{
+     borderBottomWidth:0.5,
+     paddingBottom:5,
+     marginBottom:20,
+     borderColor:'#c3c3c3',
+    },
+    headerVerde:{
+        backgroundColor: 'rgba(0, 141, 134, 1)',
+        position:'absolute',
+        zIndex:5,
+        width:'100%',
+        height:35,
+    },
+    textnenhumservico:{
+        color:'#7C7C7C',
+        fontSize:14,
+        textAlign:'center',
+        marginTop:'20%',
+    },
+    resultadoText:{
+        color:'#7C7C7C',
+        fontSize:14,
+        textAlign:'center',
+    },
+    Navigator:{
+        flexDirection:'row',
+        position:'absolute',
+        marginTop:'199.2%',
+        width:'100%',
+        justifyContent:'space-around',
+        backgroundColor:'transparent',
+        padding:5,
+    },
+    searchBarContainer: {
+        backgroundColor: '#fff',
+        borderColor:'#fff', 
+        marginTop: '10%',
+        width: '100%',
+        height: "auto",
+        alignSelf: 'center',
+      },
+      searchBarInputContainer: {
+        backgroundColor: '#FFF', 
+        width:'100%',
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 4,
+        },
+        shadowOpacity: 10.25,
+        shadowRadius: 3.84,
+        elevation: 4,
+      },
+      searchBarInput: {
+        fontSize: 16,
+        color: '#7C7C7C',
+      },
+    NavigationProcurar:{
+        backgroundColor:'rgba(0, 141, 134, 1)',
+        width:'52.6%',
+        borderRadius:0,
+        padding:2,
+    },
+    NavigationHome:{
+        backgroundColor:'#f0f0f0',
+        width:'52.6%',
+        borderRadius:0,
+        padding:2,
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 2,
+        },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+        elevation: 4,
+    },
+    PinProcurar:{
+      alignSelf:'center',
+    },
+    NavigationProcurarText:{
+      textAlign:'center',
+      color:'#00413E',
+      fontSize:10,
+    },
+    NavigationProcurarT:{
+        textAlign:'center',
+        color:'#ffff',
+        fontSize:10,
+      },
+    noServiceImage: {
+        flex: 1,
+        width: '50%',
+        height: '50%',
     },
     infoHeaderModal: {
         flexDirection: 'row',
@@ -436,12 +614,14 @@ const styles = StyleSheet.create({
         opacity: 1,
         top: '86%',
         alignSelf: "center",
+        
       },
       modalContent:{
           height:'25%',
           width:'95%',
           borderRadius:5,
           marginLeft:10,
+          
       },
       modalMessage: {
           fontSize: 14,
@@ -498,6 +678,26 @@ const styles = StyleSheet.create({
         textShadowRadius: 7,
        
     },
+    infoHeaderTextH: {
+        fontSize: 20,
+        color: '#4b4b4b',
+        fontWeight: 'bold',
+        textShadowColor: 'rgba(0, 0, 0, 0.15)',
+        textShadowOffset: { width: 1, height: 2 },
+        textShadowRadius: 7,
+       
+    },
+    infoHeaderTextH2: {
+        fontSize: 20,
+        alignSelf:'center',
+        color: '#4b4b4b',
+        marginBottom:20,
+        fontWeight: 'bold',
+        textShadowColor: 'rgba(0, 0, 0, 0.15)',
+        textShadowOffset: { width: 1, height: 2 },
+        textShadowRadius: 7,
+       
+    },
     infoHeader:{
         marginTop:60,
     },
@@ -513,8 +713,21 @@ const styles = StyleSheet.create({
         backgroundColor: '#005C58',
         marginLeft: 5,
     },
+    lineH: {
+        flex: 1,
+        height: 0.5,
+        backgroundColor: '#005C58',
+        marginRight: 5,
+        zIndex:2,
+    },
+    lineH2: {
+        flex: 1,
+        height: 0.5,
+        backgroundColor: '#005C58',
+        marginLeft: 5,
+    },
     backgroundImage: {
-        height: "85%", 
+        height: "75%", 
         width: "100%",  
         position: 'absolute',
         flex: 1,
@@ -522,16 +735,49 @@ const styles = StyleSheet.create({
     innerContainer: {
         flex: 1,
     },
+    procurartext:{
+        position:'absolute',
+        color:'#00413E',
+        fontWeight:'700',
+        fontSize:22,
+        zIndex:3,
+        textAlign:'center',
+        width:'100%',
+        marginTop:'12%',
+    },
     formContainer: {
         flex: 1,
+        flexDirection:'row-reverse',
         justifyContent: 'center',
-        padding:10,
+        paddingTop:50,
+        paddingHorizontal:10,
+        borderBottomWidth:0.5,
+        borderColor:'#00413E',
         position:'absolute',
-        width:'90%',
-        backgroundColor:'#fff',
-        borderRadius:15,
+        width:'100%',
+        backgroundColor:'transparent',
+        borderRadius:0,
         alignSelf:'center',
-        marginTop:'40%',
+        marginTop:'0%',
+    },
+    resultsContainer: {
+        flex: 1,
+        paddingHorizontal: 12,
+        width:'100%',
+        marginTop:'5%',
+        marginBottom:46,
+    },
+    InputContainer: {
+        flexDirection: 'row-reverse',
+        alignItems: 'center',
+        backgroundColor: '#FFF',
+        borderTopRightRadius: 10,
+        borderBottomRightRadius: 10,
+        marginTop: '0%',
+        width:'90%',
+        height: 50,
+        alignSelf: 'center',
+        paddingHorizontal: 10,
         shadowColor: '#000',
         shadowOffset: {
             width: 0,
@@ -540,25 +786,6 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.25,
         shadowRadius: 3.84,
         elevation: 4,
-    },
-    resultsContainer: {
-        flex: 1,
-        paddingHorizontal: 5,
-        position:'absolute',
-        height:'50%',
-        width:'100%',
-        marginTop:'116%',
-        marginLeft:'0%',
-    },
-    InputContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: '#F0F0F0',
-        borderRadius: 10,
-        marginTop: '5%',
-        height: 50,
-        alignSelf: 'center',
-        paddingHorizontal: 10,
         
     },
     InputContainer2: {
@@ -589,13 +816,8 @@ const styles = StyleSheet.create({
     Pin3: {
         alignSelf: 'center',
     },
-    PinSearch:{
-        marginLeft:'25%',
-        marginRight:'-32%',
-    },
     PinEmpresa:{
        marginRight:5,
-       backgroundColor:'white',
        borderRadius:4,
        padding:2,
     },
@@ -629,24 +851,24 @@ const styles = StyleSheet.create({
     },
     button: {
         flexDirection:'row',
-        backgroundColor: 'rgba(0, 141, 134, 1)',
-        borderRadius: 10,
-        paddingVertical: 8,
-        justifyContent: 'center',
+        backgroundColor: 'transparent',
+        borderTopLeftRadius:10,
+        borderBottomLeftRadius:10,
         alignItems: 'center',
-        alignSelf: 'center',
+        justifyContent: 'center',
+        height: 50,
+        width:40,
+        alignSelf:'center',
+        marginTop: 0,
+      },
+      buttonLoading: {
+        backgroundColor: 'transparent',
+        borderRadius: 10,
+        alignItems: 'center',
+        justifyContent: 'center',
+        height: 40,
         marginTop: 20,
-        marginBottom: 10,
-        width: '90%',
-        shadowColor: '#000',
-        shadowOffset: {
-            width: 0,
-            height: 2,
-        },
-        shadowOpacity: 0.25,
-        shadowRadius: 3.84,
-        elevation: 4,
-    },
+      },
     buttontext: {
         fontSize: 18,
         color: 'white',
@@ -654,9 +876,10 @@ const styles = StyleSheet.create({
     },
     inputEndereco: {
         flex: 1,
-        fontSize: 16,
+        fontSize: 14,
+        width:'50%',
         color: '#7C7C7C',
-        textAlign: 'center',
+        textAlign: 'left',
     },
     TextHeader: {
         fontSize: 24,
@@ -683,54 +906,48 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     servicoItem: {
-        backgroundColor: '#ffff',
-        borderRadius: 5,
+        backgroundColor: '#fff',
+        borderRadius: 0,
+        padding: 15,
         marginBottom: 10,
-        padding:5,
-        marginLeft:5,
-        marginRight:5,
-        marginTop: 5,
         shadowColor: '#000',
-        shadowOffset: {
-            width: 0,
-            height: 2,
-        },
-        shadowOpacity: 0.25,
-        shadowRadius: 3.84,
-        elevation: 4,
-    },
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 2,
+        elevation: 2,
+      },
     
     servicoEmpresa: {
         color: '#008B85',
         textAlign: 'center',
-        width:'100%',
+        width:'85%',
+        textTransform:'uppercase',
         letterSpacing:3,
         alignSelf:'center',
-        fontSize: 16,
+        fontSize: 22,
         fontWeight: '900',
         paddingBottom: 0,
-        marginTop:2,
+        marginTop:0,
     },
     precoContainer:{
      flexDirection:'row',
      paddingTop: 5,
+     paddingBottom: 5,
      marginTop: 10,
-     borderTopWidth:0.5,
+     backgroundColor:'#F0F0F0',
+     borderRadius:4,
      borderColor:'#6c6c6c',
     },
     servicoPreco: {
-        color: '#343434',
-        marginLeft:'85%',
+        color: '#4B4B4B',
         letterSpacing:0.5,
         width:'15%',
-        position:'absolute',
     },
     precoSimbolo:{
         width:'7%',
-        marginLeft:'78%',
-        color:'#343434',
+        marginLeft:'40%',
+        color:'#4B4B4B',
         letterSpacing:0.5,
-        position:'absolute',
        
     },
     precoSimbolo2: {
@@ -790,7 +1007,7 @@ const styles = StyleSheet.create({
         textAlign: 'center',
     },
     servicoRotaFim: {
-        color: '#4B4B4B',
+        color: '#4B4B4c',
         fontSize: 14,
         width:'85%',
         textAlign: 'center',
@@ -805,37 +1022,69 @@ const styles = StyleSheet.create({
         flex: 2,
         justifyContent: 'center',
         alignItems: 'center',
+        padding:10,
         backgroundColor: 'rgba(0, 0, 0, 0.35)',
     },
     modalContent2: {
         width: '100%',
         height: 'auto',
-        marginTop:'95%',
+        marginTop:'0%',
+        paddingTop:20,
         backgroundColor: '#fff',
-        borderTopLeftRadius: 10,
-        borderTopRightRadius: 10,
+        borderRadius: 15,
+        elevation:10,
     },
     modalTitle2: {
-        fontSize: 22,
-        fontWeight: 'bold',
-        marginBottom: 10,
+        fontSize: 24,
+        textTransform:'uppercase',
+        fontWeight: '800',
         textAlign:'center',
-        borderTopLeftRadius: 10,
-        paddingVertical:5,
-        textShadowColor: 'rgba(0, 0, 0, 0.55)',
-        textShadowOffset: { width: 1, height: 3 },
-        textShadowRadius: 7,
-        borderTopRightRadius: 10,
-        color:'white',
-        backgroundColor: '#008B85',
+        width:'75%',
+        alignSelf:'center',
+        padding:2,
+        borderRadius:10,
+        marginBottom:20,
+        marginTop:-10,
+        color:'#fff',
+        backgroundColor:'#00CC76',
+        textShadowColor: '#7b7b7b',
+        textShadowOffset: { width: -1.5, height: 1 },
+        textShadowRadius: 1,
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 2,
+        },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+        elevation: 4,
     },
-    modalText2: {
-        fontSize: 16,
+    modalTitle3: {
+        fontSize: 24,
+        textTransform:'uppercase',
+        fontWeight: '800',
         textAlign:'center',
-        justifyContent:'center',
-        color:'#4b4b4b',
-        fontWeight:'400',
+        width:'95%',
+        alignSelf:'center',
+        padding:2,
+        borderRadius:10,
+        marginBottom:20,
+        marginTop:-10,
+        color:'#fff',
+        backgroundColor:'rgba(0, 141, 134, 1)',
+        textShadowColor: '#7b7b7b',
+        textShadowOffset: { width: -1.5, height: 1 },
+        textShadowRadius: 1,
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 2,
+        },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+        elevation: 4,
     },
+   
     infospreco:{
       flexDirection:'row',
       marginTop:10,
@@ -880,12 +1129,13 @@ const styles = StyleSheet.create({
         marginTop: 10,
     },
     modalButton: {
-        backgroundColor: '#008B85',
-        paddingVertical:5,
-        borderRadius: 5,
+        backgroundColor: '#00CC76',
+        paddingVertical:10,
+        borderRadius: 10,
         marginBottom:10,
+        marginTop:10,
         alignSelf:'center',
-        width:'95%',
+        width:'90%',
         shadowColor: '#000',
         shadowOffset: {
             width: 0,
@@ -896,29 +1146,124 @@ const styles = StyleSheet.create({
         elevation: 4,
         
     },
-    modalButton2: {
-        backgroundColor: '#FF3D00',
-        paddingVertical:5,
-        borderRadius: 5,
-        marginBottom:20,
-        alignSelf:'center',
-        width:'95%',
+    PinInfo:{
+        position:'absolute',
+        paddingLeft:2,
+        paddingTop:2,
+    },
+    PinCheck:{
+        position:'absolute',
+        paddingLeft:2,
+        zIndex:2,
+        paddingTop:2,
+    },
+    containerCaixa01:{
         shadowColor: '#000',
         shadowOffset: {
-            width: 10,
-            height: 4,
+            width: 0,
+            height: 2,
         },
         shadowOpacity: 0.25,
         shadowRadius: 3.84,
-        elevation: 6,
+        elevation: 4,
+        backgroundColor:'#f0f0f0',
+        width:'95%',
+        alignSelf:'center',
+        borderRadius:10,
+    }, 
+    modalText4: {
+        fontSize: 14,
+        textAlign:'center',
+        marginLeft:5,
+        justifyContent:'center',
+        color:'#4b4b4b',
+        backgroundColor:'#f0f0f0',
+        fontWeight:'400',
+        padding:12,
+    },
+    modalText2: {
+        fontSize: 14,
+        textAlign:'center',
+        marginLeft:5,
+        justifyContent:'center',
+        color:'#4b4b4b',
+        fontWeight:'400',
+        padding:12,
+    },
+    cobrançaContainer:{
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 2,
+        },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+        elevation: 4,
+        backgroundColor:'#f0f0f0',
+        width:'95%',
+        alignSelf:'center',
+        borderRadius:10,
+    }, 
+    modalText3: {
+        fontSize: 14,
+        textAlign:'center',
+        marginLeft:5,
+        justifyContent:'center',
+        color:'#4b4b4b',
+        fontWeight:'400',
+        padding:12,
+    },
+    modalButton2: {
+        backgroundColor: 'transparent',
+        position:'absolute',
+        marginTop:'-4%',
+        marginLeft:'93%',
+        width:'7%',
+        height:'auto',
+        paddingBottom:3,
         
     },
     modalButtonText: {
         color: '#fff',
         fontSize: 16,
         textAlign:'center',
-        textShadowColor: 'rgba(0, 0, 0, 0.75)',
-        textShadowOffset: { width: 1, height: 2 },
-        textShadowRadius: 7,
+        textShadowColor: '#7b7b7b',
+        textShadowOffset: { width: -1.5, height: 1 },
+        textShadowRadius: 1,
+    },
+
+    alinharCity1:{
+        flexDirection:'row',
+        backgroundColor:'#f0f0f0',
+        width:'27%',
+        marginTop:5,
+        borderRadius:5,
+        marginLeft:37,
+        padding:2,
+    },
+    textCity1:{
+        fontSize:10,
+        width:'100%',
+        color:'#4b4b4b',
+        marginLeft:2,
+        
+    },
+    alinharCity2:{
+        flexDirection:'row',
+        backgroundColor:'#f0f0f0',
+        width:'30%',
+        position:'absolute',
+        marginTop:5,
+        borderRadius:5,
+        marginLeft:'61.5%',
+        marginTop:'56.4%',
+        padding:2,
+    },
+    textCity2:{
+        fontSize:10,
+        width:'100%',
+        color:'#4b4b4b',
+        marginLeft:2,
+        
     },
 });

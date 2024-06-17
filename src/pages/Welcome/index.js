@@ -2,25 +2,21 @@ import React from 'react';
 import {View, Text, StyleSheet, Image, TouchableOpacity} from 'react-native';
 import * as Animatable from 'react-native-animatable';
 import {useNavigation }from '@react-navigation/native';
-
-
-
  export default function Welcome(){
     const navigation = useNavigation();
     return(
         <View style={styles.container}> 
-          <Text style={styles.titulo}>UniBus</Text>
             <View style={styles.containerLogo}>
                 <Animatable.Image
                 animation="flipInY"
-                source={require('../../assets/WelcomeIMG.png')}
-                style={{height:"100%", marginTop:100,alignSelf:"center", width:"100%"}}
+                source={require('../../assets/backwelcome.png')}
+                style={{height:"100%",alignSelf:"center", width:"100%",marginTop:200,}}
                 resizeMode = "cover"
                 />
             </View>
 
             <Animatable.View delay={600} animation="fadeInUp" style={styles.containerForm}>
-            <Text style={styles.ApresentaApp}> Solução  eficiente na procura de transportes para Universitários. Encontre aqui a melhor empresa para te levar até sua Instituição de Ensino!</Text>
+            <Text style={styles.ApresentaApp}> Gerenciamento de Transporte para Universitários. Encontre aqui a melhor empresa para te levar até sua Instituição de Ensino!</Text>
             <Text style={styles.FÇlogin}>Faça o login ou Cadastre-se para começar</Text>
             <TouchableOpacity style={styles.buttonlogin}
             onPress={() => navigation.navigate('SignIn')}>
@@ -54,11 +50,11 @@ const styles = StyleSheet.create({
     },
     container: {
         flex: 1,
-        backgroundColor : '#ffff',
+        backgroundColor : 'rgba(0, 141, 134, 1)',
     },
     containerLogo:{
         flex: 2.5,
-        backgroundColor: '#ffff',
+        backgroundColor: 'rgba(0, 141, 134, 1)',
         justifyContent: 'center',
         alignItems: ' center',
         marginTop: -100,

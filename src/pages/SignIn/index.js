@@ -1,13 +1,13 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useContext } from 'react';
 import { StatusBar } from 'react-native';
+import { AuthContext } from '../../Auth/authContext/AuthContext';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, Image, Modal } from 'react-native';
 import * as Animatable from 'react-native-animatable';
 import { useNavigation } from '@react-navigation/native';
 import { Feather } from '@expo/vector-icons';
-import api from '../services/api';
+import api from '../../services/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import TabRoutes from '../../TabRoutes';
-import Loading from '../components/Loading';
+import Loading from '../../components/Loading';
 
 
 export default function Login() {
@@ -19,8 +19,10 @@ export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [camposObrigatorios, setCamposObrigatorios] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({});
+  const { login } = useContext(AuthContext);
+
 
   const showAndHideError = (message) => {
     setErrorTotais(message);
@@ -61,44 +63,40 @@ export default function Login() {
     return camposFaltando.length === 0;
 }, [ email,password]);
 
-    const onSubmit = async (email, password) => {
-      setIsLoading(true);
-      if(verificarCamposObrigatorios()){
-      try {
-        if (!email || !password) {
-          showAndHideError('Por favor, preencha todos os campos.');
-          setIsLoading(false);
-          return;
-        }
-        console.log('Dados validados:', { email, password });
-  
-        const response = await api.post('/auth/client', { email, password });
-  
-        console.log('Resposta da API:', response.data);
-  
-        if (response.data.token) {
-          await AsyncStorage.setItem('userToken', response.data.token);
-          showAndHideSuccess('Sucesso ao Entrar');
-          setIsLoading(false);
-          setTimeout(() => {
-            setShowModal(false);
-            setIsLoading(false);
-            setErrorTotais('');
-            navigation.navigate('TabRoutes');
-          }, 1500);
-        } else {
-          showAndHideError('Email ou senha incorretos, tente novamente.');
-          setIsLoading(false);
-        }
-      } catch (error) {
-        showAndHideError('E-mail ou senha incorretos!');
+const onSubmit = async (email, password) => {
+  setIsLoading(true);
+  if (verificarCamposObrigatorios()) {
+    try {
+      if (!email || !password) {
+        showAndHideError('Por favor, preencha todos os campos.');
+        setIsLoading(false);
+        return;
+      }
+      const response = await api.post('/auth/client', { email, password });
+      if (response.data.token) {
+        await AsyncStorage.setItem('userToken', response.data.token);
+        login(response.data.token);
+        showAndHideSuccess('Sucesso ao Entrar');
+        setTimeout(() => {
+          navigation.reset({
+            index: 0,
+            routes: [{ name: 'MainNavigator' }],
+          });
+        }, 1500);
+      } else {
+        showAndHideError('Email ou senha incorretos, tente novamente.');
         setIsLoading(false);
       }
-    }else {
-      showAndHideError('Preencha todos os campos obrigatórios');
+    } catch (error) {
+      showAndHideError('E-mail ou senha incorretos!');
       setIsLoading(false);
     }
-    };
+  } else {
+    showAndHideError('Preencha todos os campos obrigatórios');
+    setIsLoading(false);
+  }
+};
+
     const clearFieldError = (field) => {
       setFieldErrors((prevErrors) => {
           const newErrors = { ...prevErrors };
@@ -118,40 +116,43 @@ export default function Login() {
       <Animatable.View animation="fadeInUp" delay={200} style={styles.containerform}>
         <Text style={styles.logintext}>Login</Text>
         <Text style={styles.text2}>Digite seu e-mail:</Text>
-        
+        <View style={styles.InputEmailIcon}>
+        <Feather name={'mail'} size={18} color="#005C58" style={styles.PinEmail}/>
         <TextInput
           placeholder="E-mail"
           keyboardType="email-address"
           style={[styles.inputEmail, camposObrigatorios.includes('email') && styles.campoObrigatorio]}
           onChangeText={(text) => {setEmail(text); clearFieldError('email');}}
         />
+        </View>
         {fieldErrors.email && <Text style={styles.errorText1}>{fieldErrors.email}</Text>}
+        
         <Text style={styles.text1}>Digite sua senha:</Text>
         <View style={styles.inputSENHA}>
-        
+        <Feather name={'key'} size={18} color="#005C58" style={styles.PinSenha}/>
           <TextInput
             placeholder="Senha"
             secureTextEntry={!showPassword}
             style={[styles.inputSENHA, camposObrigatorios.includes('password') && styles.campoObrigatorio]}
             onChangeText={(text) => {setPassword(text);clearFieldError('password');}}
           />
-          {fieldErrors.password && <Text style={styles.errorText}>{fieldErrors.password}</Text>}
           <TouchableOpacity
             style={styles.togglepassword}
             onPress={() => setShowPassword(!showPassword)}>
-            <Feather name={showPassword ? 'eye' : 'eye-off'} size={18} color="#c3c3c3" />
+            <Feather name={showPassword ? 'eye' : 'eye-off'} size={18} color="#4B4B4B" />
           </TouchableOpacity>
-        </View>
-        <TouchableOpacity style={styles.buttonEsqueceuSenha} onPress={() => navigation.navigate('RecuperarSenha')}>
-          <Text style={styles.Esenhatext}>Esqueceu sua senha?</Text>
-        </TouchableOpacity>
+        </View>  
+        {fieldErrors.password && <Text style={styles.errorText}>{fieldErrors.password}</Text>}
+        
         <TouchableOpacity style={styles.button} onPress={() => onSubmit(email, password)}>
          {isLoading ? <Loading /> : <Text style={styles.buttontext}>Acessar</Text>}
         </TouchableOpacity>
         <TouchableOpacity style={styles.buttonCadrasto} onPress={() => navigation.navigate('Cadastro')}>
           <Text style={styles.cadastro}>Primeiro Acesso? Cadastrar-se</Text>
         </TouchableOpacity>
-       
+       <TouchableOpacity style={styles.buttonEsqueceuSenha} onPress={() => navigation.navigate('RecuperarSenha')}>
+          <Text style={styles.Esenhatext}>Esqueceu sua senha?</Text>
+        </TouchableOpacity>
       </Animatable.View>
 
       <Modal visible={showModal} transparent>
@@ -281,7 +282,7 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 7,
     alignSelf: 'center',
-    color: "rgba(0, 141, 134, 1)",
+    color: "#005C58",
     zIndex: 0,
   },
   containerHeader: {
@@ -303,15 +304,19 @@ const styles = StyleSheet.create({
  
   button: {
     backgroundColor: 'rgba(0, 141, 134, 1)',
-    width: '80%', 
-    height:'6.5%',
-    position:'absolute',
     borderRadius: 10,
-    paddingVertical: 8,
-    justifyContent: 'center',
     alignItems: 'center',
-    marginTop: '90%', 
-    alignSelf: 'center', 
+    justifyContent: 'center',
+    height: 50,
+    marginTop: 40,
+  },
+  buttonLoading: {
+    backgroundColor: '#ddd',
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 50,
+    marginTop: 20,
   },
   buttontext: {
     color: 'white',
@@ -319,14 +324,15 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   buttonEsqueceuSenha: {
-    marginTop: 10,
+    marginTop:70,
+    marginBottom:0,
     width: '100%',
   },
   Esenhatext: {
     color: '#343434',
     fontSize: 12,
-    textDecorationLine: "underline",
-    textAlign:'right', 
+    textAlign:'center',
+    textDecorationLine: "none",
   },
   inputEmail: {
     paddingLeft: 0,
@@ -338,15 +344,37 @@ const styles = StyleSheet.create({
     borderRadius: 0,
     borderColor: '#005C58',
     borderBottomWidth: 0.5,
+    width:'90%',
     marginTop: 150,
   },
+  InputEmailIcon:{
+    flexDirection: 'row',
+    alignItems: 'center',
+    width:'100%',
+  },
+  PinEmail:{
+   marginTop:136,
+   width:'7%',
+   borderColor: '#005C58',
+   borderBottomWidth: 0.5,
+   paddingBottom:10,
+   
+  },
+  PinSenha:{
+    marginTop:13,
+    width:'7%',
+    borderColor: '#005C58',
+    paddingBottom:10,
+  },
   inputSENHA: {
+    flexDirection:'row',
     paddingLeft: 0,
     height: 40,
     color:'#00413E',
     backgroundColor: 'transparent',
     marginTop: 0,
     fontSize: 14,
+    width:'95%',
     borderRadius: 0,
     borderColor: '#005C58',
     borderBottomWidth: 0.5,
@@ -360,8 +388,8 @@ const styles = StyleSheet.create({
     left: 20,
     position: 'absolute',
     borderColor: 'red',
-    borderTopWidth: 1,
-    width: '100%', 
+    borderTopWidth: 0.5,
+    width: '90%', 
   },
   erroSENHA: {
     color: 'red',
@@ -371,8 +399,8 @@ const styles = StyleSheet.create({
     left: 20,
     position: 'absolute',
     borderColor: 'red',
-    borderTopWidth: 1,
-    width: '100%', 
+    borderTopWidth: 0.5,
+    width: '90%', 
   },
   errorModalContainer: {
     flex: 1,

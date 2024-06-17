@@ -4,15 +4,16 @@ import * as Animatable from 'react-native-animatable';
 import { useNavigation } from '@react-navigation/native';
 import { TextInputMask } from 'react-native-masked-text';
 import { useRoute } from '@react-navigation/native';
-import api from '../services/api';
+import api from '../../services/api';
 import { StatusBar } from 'react-native';
-import ProgressBar from './progressBar';
+import ProgressBar from '../../pages/RecuperarSenha/progressBar';
 import ForgotPassword from '../../assets/ForgotPassword.jpg';
 import ForgotEmail from '../../assets/email.jpg';
 import Forgotcodigo from '../../assets/codigo.jpg';
 import seguranca from '../../assets/segurança-02.jpg';
 import seguranca2 from '../../assets/password.jpg';
 import obrigado from '../../assets/obrigado.jpg';
+import Loading from '../../components/Loading';
 
 
 export default function RecuperarSenha() {
@@ -424,7 +425,7 @@ export default function RecuperarSenha() {
                         />
                         {fieldErrors.emailconfirmado && <Text style={styles.errorText}>{fieldErrors.emailconfirmado}</Text>}
                         <TouchableOpacity style={styles.button} onPress={proximaEtapa}>
-                                <Text style={styles.buttontext}>{isLoading ? 'Carregando...' : 'Próxima etapa'}</Text>
+                                {isLoading ? <Loading /> : <Text style={styles.buttontext}>Próxima etapa</Text>}
                         </TouchableOpacity>
                     </Animatable.View>
                 )}
@@ -436,9 +437,9 @@ export default function RecuperarSenha() {
                         </View>
                         <Image
                                 source={Forgotcodigo}
-                                style={{ height: "55%", 
+                                style={{ height: "60%", 
                                 width: "100%",  alignSelf: "center",
-                                 marginTop:'19%',
+                                 marginTop:'10%',
                                  position:'absolute', 
                                  alignSelf:'left',
                                 zIndex: 0,
@@ -464,20 +465,20 @@ export default function RecuperarSenha() {
                             />
                            
                         </View> 
-                        <TouchableOpacity style={styles.buttonReenviar} disabled={!enviarDisponivel} onPress={reenviarcodigo}>
+                        <TouchableOpacity style={styles.buttonTextReenviar} disabled={!enviarDisponivel} onPress={reenviarcodigo}>
                             <Text style={styles.buttonTextReenviar}>{enviarDisponivel ? 'Reenviar Código' : `Reenviar em ${tempoRestante}s`}</Text>
                             </TouchableOpacity>
                         {fieldErrors.codigo && <Text style={styles.errorText}>{fieldErrors.codigo}</Text>}
-                        <TouchableOpacity style={styles.button} onPress={salvar}>
-                            <Text style={styles.buttontext}>Próxima Etapa</Text>
+                        <TouchableOpacity style={styles.button2} onPress={salvar}>
+                        {isLoading ? <Loading /> : <Text style={styles.buttontext}>Próxima etapa</Text>}
                         </TouchableOpacity>
                     </Animatable.View>
                 )}
                  {etapa === 3 && (
                     <Animatable.View delay={200} animation="fadeInUp">
                         <View style={styles.infoHeader}>
-                            <Text style={styles.infoHeaderText2}>Por favor, informe sua senha nova enquanto seu código chega a você:</Text>
-                            <Text style={styles.textHeader2}>Lembre-se... crie uma senha que você vá se lembrar e tome cuidado, não compartilhe sua senha com nínguem!</Text>
+                            <Text style={styles.infoHeaderText2}>Por favor, informe sua nova senha enquanto seu código chega a você:</Text>
+                
                         </View>
                         <Image
                                 source={seguranca2}
@@ -512,7 +513,7 @@ export default function RecuperarSenha() {
                     <Animatable.View delay={200} animation="fadeInUp">
                         <View style={styles.infoHeader}>
                             <Text style={styles.infoHeaderText2}>Tudo certo ! Agora  digite  novamente  sua  nova  senha:</Text>
-                            <Text style={styles.textHeader2}>Tome cuidado.  Nós da UniBus jamais entraremos em contato pedindo sua senha.</Text>
+                            <Text style={styles.textHeader2}></Text>
                         </View>
                         <Image
                                 source={seguranca}
@@ -587,21 +588,21 @@ const styles = StyleSheet.create({
      color:'#005C58',
      textAlign:'left',
      fontSize:12,
-     marginTop:'75%',
+     marginTop:'79%',
      fontWeight:'400',
     },
     text2: {
         color:'#005C58',
         textAlign:'left',
         fontSize:12,
-        marginTop:'85%',
+        marginTop:'82%',
         fontWeight:'400',
        },
        text3: {
         color:'#005C58',
         textAlign:'left',
         fontSize:12,
-        marginTop:'73%',
+        marginTop:'82%',
         fontWeight:'400',
        },
     textHeader2: {
@@ -678,11 +679,9 @@ const styles = StyleSheet.create({
       
     },
     Codigo: {
-        flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'center',
-        marginTop: 10,
         right:8,
+        marginBottom:10,
     },
     line1: {
         flex: 1,
@@ -698,7 +697,7 @@ const styles = StyleSheet.create({
     },
     infoHeaderText0: {
         fontSize: 25,
-        color: '#005C58',
+        color: '#3C3C3C',
         paddingRight:0,
         fontWeight: '800',
         justifyContent:'center',
@@ -707,7 +706,7 @@ const styles = StyleSheet.create({
     },
     infoHeaderText3: {
         fontSize: 25,
-        color: '#005C58',
+        color: '#3C3C3C',
         paddingRight:0,
         fontWeight: '800',
         justifyContent:'justify',
@@ -716,7 +715,7 @@ const styles = StyleSheet.create({
     },
     infoHeaderText2: {
         fontSize: 25,
-        color: '#005C58',
+        color: '#3C3C3C',
         fontWeight: '800',
         textAlign:'justify',
         marginTop:'-7%',
@@ -795,26 +794,40 @@ const styles = StyleSheet.create({
         color:'#00413E',
     },
     button: {
-        backgroundColor: '#005C58',
-        width: '100%',
-        borderRadius: 5,
-        paddingVertical: 8,
-        justifyContent: 'center',
+        backgroundColor: 'rgba(0, 141, 134, 1)',
+        borderRadius: 10,
         alignItems: 'center',
+        justifyContent: 'center',
+        height: 40,
         marginTop: 10,
-        alignSelf: 'center',
-        zIndex: 2,
-    },
+      },
+      button2: {
+        backgroundColor: 'rgba(0, 141, 134, 1)',
+        borderRadius: 10,
+        alignItems: 'center',
+        justifyContent: 'center',
+        height: 40,
+        marginTop: 30,
+      },
+      buttonLoading: {
+        backgroundColor: '#ddd',
+        borderRadius: 10,
+        alignItems: 'center',
+        justifyContent: 'center',
+        height: 40,
+        marginTop: 10,
+      },
     buttonTextReenviar:{
         color:'#005C58',
         fontSize:12,
         fontWeight:'600',
-        marginTop:5,
-        textAlign:'center',
+        marginTop:'119%',
+        position:'absolute',
+        marginLeft:'73%',
     },
      
     buttonEtapa0: {
-        backgroundColor: '#005C58',
+        backgroundColor: 'rgba(0, 141, 134, 1)',
         width: '100%',
         borderRadius: 5,
         paddingVertical: 8,
@@ -843,7 +856,7 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
     },
     buttonFinalizar: {
-        backgroundColor: '#005C59',
+        backgroundColor: 'rgba(0, 141, 134, 1)',
         width: '100%',
         borderRadius: 5,
         paddingVertical: 8,

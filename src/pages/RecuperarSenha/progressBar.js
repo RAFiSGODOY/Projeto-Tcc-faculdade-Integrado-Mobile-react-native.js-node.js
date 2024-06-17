@@ -19,7 +19,7 @@ const styles = StyleSheet.create({
     },
     bar: {
         height: '100%',
-        backgroundColor: '#005C58',
+        backgroundColor: '#47C2B6',
         borderTopRightRadius: 5,
         borderBottomRightRadius: 5,
     },
