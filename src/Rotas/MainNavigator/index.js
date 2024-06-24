@@ -26,9 +26,9 @@ export default function MainNavigator() {
                 name="Configuracoes"
                 component={Configuracoes}
                 options={{ 
-                    title: 'Configurações',
+                    title: 'Perfil',
                     headerTitleStyle: {
-                        fontWeight: 'bold', 
+                        fontWeight: '200', 
                     },
                     headerTintColor: '#fff', 
                     headerStyle: {

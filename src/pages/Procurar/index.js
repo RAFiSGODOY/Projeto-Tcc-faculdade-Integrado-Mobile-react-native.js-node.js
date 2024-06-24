@@ -220,6 +220,7 @@ export default function Procurar() {
                 },
             });
             const servicos = response.data;
+            console.log(servicos)
             if (servicos.length > 0) {
                 setServicosEncontrados(servicos);
                 setMensagem('Serviços Encontrados:');
@@ -325,7 +326,7 @@ export default function Procurar() {
                                         </View> 
                                         <View style={styles.precoContainer}>
                                         <Text style={styles.precoSimbolo}>R$:</Text>
-                                        <Text style={styles.servicoPreco}>{formatarPreco(servico.preco)},00</Text>
+                                        <Text style={styles.servicoPreco}>{servico.preco}</Text>
                                     </View>
                                     
                                 </TouchableOpacity>
@@ -437,6 +438,9 @@ export default function Procurar() {
                             <Animatable.View animation="fadeInUp" delay={200}>
                              
                                 <Text style={styles.infoHeaderTextH2}>Empresa Contratada!</Text>
+                                <TouchableOpacity activeOpacity={0.8} style={styles.modalButton2} onPress={closeModal}>
+                                <Feather name="x" size={22} color={'#4b4b4b'} style={styles.PinFechar} />
+                                </TouchableOpacity>
                                 <View style={styles.containerCaixa01}>
                                 <Feather name="info" size={16} color={'#7b7b7b'} style={styles.PinCheck} />
                                 <Text style={styles.modalText4}>Agora você possui um contrato de transporte para sua Instituição de Ensino! Fique tranquilo a baixo vamos te informar como prosseguir daqui em diante, sucesso!</Text>
@@ -489,7 +493,7 @@ export default function Procurar() {
             </TouchableOpacity>
             <TouchableOpacity style={styles.NavigationHome} onPress={(verificarContrato)}>
             <Feather name="briefcase" size={20} color={'#005C58'} style={styles.PinProcurar} />
-              <Text style={styles.NavigationProcurarText}>Contratos</Text>
+              <Text style={styles.NavigationProcurarText}>Contrato</Text>
             </TouchableOpacity>
             </View>
             </SafeAreaView>
@@ -508,13 +512,7 @@ const styles = StyleSheet.create({
      marginBottom:20,
      borderColor:'#c3c3c3',
     },
-    headerVerde:{
-        backgroundColor: 'rgba(0, 141, 134, 1)',
-        position:'absolute',
-        zIndex:5,
-        width:'100%',
-        height:35,
-    },
+   
     textnenhumservico:{
         color:'#7C7C7C',
         fontSize:14,
@@ -685,13 +683,20 @@ const styles = StyleSheet.create({
         textShadowColor: 'rgba(0, 0, 0, 0.15)',
         textShadowOffset: { width: 1, height: 2 },
         textShadowRadius: 7,
+        marginBottom:10,
+        borderBottomWidth:0.5,
+        width:'85%',
+        textAlign:'center',
        
     },
     infoHeaderTextH2: {
-        fontSize: 20,
+        fontSize: 24,
         alignSelf:'center',
         color: '#4b4b4b',
         marginBottom:20,
+        width:'85%',
+        textAlign:'center',
+        borderBottomWidth:0.5,
         fontWeight: 'bold',
         textShadowColor: 'rgba(0, 0, 0, 0.15)',
         textShadowOffset: { width: 1, height: 2 },
@@ -1031,7 +1036,7 @@ const styles = StyleSheet.create({
         marginTop:'0%',
         paddingTop:20,
         backgroundColor: '#fff',
-        borderRadius: 15,
+        borderRadius: 5,
         elevation:10,
     },
     modalTitle2: {
@@ -1256,7 +1261,7 @@ const styles = StyleSheet.create({
         marginTop:5,
         borderRadius:5,
         marginLeft:'61.5%',
-        marginTop:'56.4%',
+        marginTop:'59.4%',
         padding:2,
     },
     textCity2:{

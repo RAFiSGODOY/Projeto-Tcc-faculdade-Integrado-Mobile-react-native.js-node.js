@@ -39,7 +39,7 @@ export default function RecuperarSenha() {
 
     const reenviarcodigo = async () => {
         try {
-            const response = await api.post('/reset-code', { email });
+            const response = await api.post('/reset-code-user', { email });
             console.log('Resposta do servidor:', response.data.code);
             if (response.data) {
                 setCodigoEnviado(response.data);
@@ -56,7 +56,7 @@ export default function RecuperarSenha() {
                 showAndHideError('Erro ao reenviar código!');
             }
         } catch (error) {
-            showAndHideError('Erro no servidor!');
+            showAndHideError('Erro no servidor!'); 
             verificarCamposObrigatorios();
             setTimeout(() => {
                 setShowModal(false);
@@ -209,7 +209,7 @@ export default function RecuperarSenha() {
     //Manda o codigo para o email do usuario
     const  mandarCodigoRecuperacao = async () => {
         try {
-            const response = await api.post('/reset-code', { email });
+            const response = await api.post('/reset-code-user', { email });
             console.log('Resposta do servidor:', response.data.code);
             if (response.data) {
                 setCodigoEnviado(response.data);
@@ -226,6 +226,7 @@ export default function RecuperarSenha() {
             }
         } catch (error) {
             showAndHideError('Erro no servidor!');
+            console.log('Resposta do servidor:', error);
             verificarCamposObrigatorios();
             setTimeout(() => {
                 setShowModal(false);
