@@ -182,7 +182,7 @@ export default function Home() {
 
     return (
         <SafeAreaView style={styles.container}>
-            <StatusBar transparent barStyle="light-content" />
+            <StatusBar transparent barStyle="dark-content" />
             <Modal visible={showModal2} transparent>
                 <Animatable.View animation="fadeInLeft" duration={300} style={styles.modalContainer2}>
                     <Animatable.View animation="bounceIn" duration={1000} style={[styles.modalContent2, { backgroundColor: modalColor }]}>
@@ -296,9 +296,6 @@ export default function Home() {
                             <Feather name="phone" size={16} color={'#005C58'} style={styles.PinProcurar} />
                             <Text style={styles.InformaCampo2}> Telefone para contato:</Text>
                             <Text style={styles.NomeProprietario2}>{formatarTelefone(Telefone)}</Text>
-                            <TouchableOpacity onPress={() => setShowCopyOptionsTell(!showCopyOptionsTell)}>
-                                <Feather name="more-vertical" size={16} color={'#005C58'} style={styles.PinOpções} />
-                            </TouchableOpacity>
                         </View>
                         <View style={styles.Flex}>
                             <Animatable.View
@@ -327,9 +324,6 @@ export default function Home() {
                             <Feather name="mail" size={16} color={'#005C58'} style={styles.PinProcurar} />
                             <Text style={styles.InformaCampo3}> E-mail para Contato:</Text>
                             <Text style={styles.NomeProprietario3}>{emailempresa}</Text>
-                            <TouchableOpacity onPress={() => setShowCopyOptionsEmail(!showCopyOptionsEmail)}>
-                                <Feather name="more-vertical" size={16} color={'#005C58'} style={styles.PinOpções} />
-                            </TouchableOpacity>
                         </View>
                         <View style={styles.Flex}>
                             <Animatable.View
